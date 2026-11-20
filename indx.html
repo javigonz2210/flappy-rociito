@@ -1,0 +1,2998 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>💖 Flappy Rociito 🥑</title>
+
+  <!-- Tipografía redondeada y divertida estilo sticker kawaii -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet" />
+
+  <style>
+    /* =========================================================================
+       ESTILOS GENERALES, TEMA KAWAII PASTEL Y ADAPTACIÓN MÓVIL (100dvh)
+       ========================================================================= */
+    :root {
+      --ink: #231f20;
+      --pink-hot: #ff5c8a;
+      --pink-mid: #ff8fab;
+      --pink-soft: #ffb3c6;
+      --pink-pale: #ffe5ec;
+      --sky-top: #6fd0ff;
+      --sky-mid: #a3e4ff;
+      --sky-low: #dcf6ff;
+      --avo-green: #84cc16;
+      --cream: #fffdf9;
+      --turbo-gold: #ff9f1c;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      height: 100dvh;
+      overflow: hidden;
+      overscroll-behavior: none;
+      touch-action: manipulation;
+      background: linear-gradient(180deg, #5cc6ff 0%, #9ee2ff 55%, #ffd6e4 100%);
+      font-family: 'Fredoka', 'Nunito', system-ui, -apple-system, sans-serif;
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Contenedor principal centrado */
+    #game-shell {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+
+    /* Marco del lienzo: pantalla completa en móvil, tarjeta sticker en escritorio */
+    #canvas-wrapper {
+      position: relative;
+      overflow: hidden;
+      background: var(--sky-top);
+      touch-action: manipulation;
+    }
+
+    @media (min-width: 500px) and (min-height: 680px) {
+      #game-shell {
+        padding: 16px;
+      }
+      #canvas-wrapper {
+        border-radius: 30px;
+        border: 4px solid var(--ink);
+        box-shadow:
+          9px 9px 0 var(--pink-mid),
+          0 22px 45px rgba(35, 31, 32, 0.22);
+      }
+    }
+
+    canvas#game {
+      display: block;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+    }
+
+    /* Capa de celebración a pantalla completa (confeti, corazones, aguacates y caquitas) */
+    canvas#celebration-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 18;
+    }
+
+    /* =========================================================================
+       HUD SUPERIOR (MARCADOR 0 / 67, MODO TURBO, BARRA, RÉCORD Y AUDIO)
+       ========================================================================= */
+    #hud {
+      position: absolute;
+      top: max(12px, env(safe-area-inset-top));
+      left: 12px;
+      right: 12px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+      pointer-events: none;
+      z-index: 12;
+      transition: opacity 0.22s ease;
+    }
+
+    .hud-left {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 152px;
+    }
+
+    .score-pill {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      background: var(--cream);
+      border: 3px solid var(--ink);
+      border-radius: 20px;
+      padding: 6px 14px 8px;
+      box-shadow: 4px 4px 0 var(--pink-mid);
+      transition: box-shadow 0.25s ease, background 0.25s ease;
+    }
+
+    .score-pill.turbo-pill {
+      background: linear-gradient(180deg, #fffdf9 0%, #fff1df 100%);
+      box-shadow: 4px 4px 0 var(--turbo-gold), 0 0 14px rgba(255, 159, 28, 0.45);
+    }
+
+    .score-pill-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-size: 1.24rem;
+      font-weight: 700;
+      color: var(--ink);
+      line-height: 1.1;
+    }
+
+    .score-pill-row .score-current {
+      color: var(--pink-hot);
+      font-size: 1.42rem;
+    }
+
+    .turbo-tag {
+      display: inline-flex;
+      align-items: center;
+      background: linear-gradient(90deg, #ff5c8a 0%, #ff9f1c 100%);
+      color: #ffffff;
+      border: 2px solid var(--ink);
+      border-radius: 999px;
+      padding: 1px 8px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-shadow: 0 1px 0 rgba(35, 31, 32, 0.35);
+      white-space: nowrap;
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 9px;
+      background: var(--pink-pale);
+      border: 2px solid var(--ink);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #ff5c8a 0%, #ff8fab 50%, #a3e635 100%);
+      border-radius: 999px;
+      transition: width 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .progress-fill.turbo-active {
+      background: linear-gradient(
+        90deg,
+        #ff5c8a 0%,
+        #ff9f1c 18%,
+        #fde047 36%,
+        #a3e635 54%,
+        #7dd3fc 72%,
+        #d8b4fe 88%,
+        #ff5c8a 100%
+      );
+      background-size: 240% 100%;
+      animation: turboFlow 1.5s linear infinite;
+      box-shadow: 0 0 8px rgba(255, 159, 28, 0.65);
+    }
+
+    @keyframes turboFlow {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 240% 50%; }
+    }
+
+    .hud-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .best-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: #fff9db;
+      border: 3px solid var(--ink);
+      border-radius: 999px;
+      padding: 7px 11px;
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: var(--ink);
+      box-shadow: 3px 3px 0 #7dd3fc;
+      white-space: nowrap;
+    }
+
+    .icon-btn {
+      pointer-events: auto;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 3px solid var(--ink);
+      background: var(--cream);
+      color: var(--ink);
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 3px 3px 0 var(--pink-mid);
+      transition: transform 0.1s ease, box-shadow 0.1s ease;
+    }
+
+    .icon-btn:active {
+      transform: translate(2px, 2px);
+      box-shadow: 1px 1px 0 var(--pink-mid);
+    }
+
+    /* Aviso flotante no bloqueante en el estado READY */
+    #ready-hint {
+      position: absolute;
+      left: 50%;
+      bottom: 22%;
+      transform: translateX(-50%);
+      pointer-events: none;
+      z-index: 11;
+      text-align: center;
+      width: 88%;
+    }
+
+    .ready-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: var(--cream);
+      border: 3px solid var(--ink);
+      color: var(--ink);
+      padding: 11px 22px;
+      border-radius: 999px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      box-shadow: 5px 5px 0 var(--pink-mid);
+      animation: floatBob 1.3s ease-in-out infinite;
+    }
+
+    .ready-badge.turbo-ready {
+      background: linear-gradient(180deg, #fff8eb 0%, #ffe5ec 100%);
+      box-shadow: 5px 5px 0 var(--turbo-gold), 0 0 18px rgba(255, 159, 28, 0.35);
+    }
+
+    @keyframes floatBob {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-7px) scale(1.03); }
+    }
+
+    /* =========================================================================
+       TARJETAS OVERLAY ESTILO STICKER KAWAII (INICIO, GAME OVER, VICTORIA)
+       ========================================================================= */
+    #overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(111, 208, 255, 0.32);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      z-index: 20;
+      animation: fadeIn 0.22s ease;
+    }
+
+    #overlay.win-backdrop {
+      background: rgba(255, 229, 236, 0.26);
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .card {
+      position: relative;
+      width: 100%;
+      max-width: 336px;
+      background: var(--cream);
+      border: 3px solid var(--ink);
+      border-radius: 28px;
+      padding: 22px 20px 20px;
+      text-align: center;
+      box-shadow: 7px 7px 0 var(--pink-mid);
+      animation: stickerPop 0.34s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .card.win-card-style {
+      background: linear-gradient(180deg, #fffdf9 0%, #fff0f5 100%);
+      box-shadow: 8px 8px 0 var(--pink-hot), 0 18px 40px rgba(255, 92, 138, 0.28);
+    }
+
+    @keyframes stickerPop {
+      from { opacity: 0; transform: scale(0.86) translateY(16px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    /* Insignia superior con vista previa del pajarito de Rociito */
+    .avatar-preview-wrap {
+      width: 96px;
+      height: 96px;
+      margin: -4px auto 12px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, #dcf6ff 0%, #8ad9ff 100%);
+      border: 3px solid var(--ink);
+      box-shadow: 4px 4px 0 var(--pink-soft);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    #avatar-preview-canvas {
+      width: 96px;
+      height: 96px;
+      display: block;
+    }
+
+    .card-tag {
+      display: inline-block;
+      background: #dcf6ff;
+      border: 2px solid var(--ink);
+      border-radius: 999px;
+      padding: 3px 12px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 8px;
+    }
+
+    .card h1 {
+      font-size: 1.62rem;
+      line-height: 1.15;
+      color: var(--pink-hot);
+      margin-bottom: 10px;
+      -webkit-text-stroke: 0.6px var(--ink);
+      text-shadow: 2px 2px 0 rgba(255, 179, 198, 0.85);
+    }
+
+    .card p {
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.96rem;
+      font-weight: 800;
+      line-height: 1.45;
+      color: #3f3a3c;
+      margin-bottom: 16px;
+    }
+
+    .goal-pill {
+      display: inline-block;
+      background: #ffe5ec;
+      border: 2px solid var(--ink);
+      color: var(--pink-hot);
+      padding: 1px 10px;
+      border-radius: 999px;
+      font-weight: 900;
+    }
+
+    /* Estadísticas de Game Over */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .stat-box {
+      background: #f0faff;
+      border: 2.5px solid var(--ink);
+      border-radius: 16px;
+      padding: 9px 6px;
+      box-shadow: 3px 3px 0 #a3e4ff;
+    }
+
+    .stat-box.pink-stat {
+      background: #fff0f5;
+      box-shadow: 3px 3px 0 var(--pink-soft);
+    }
+
+    .stat-box.green-stat {
+      background: #f3fde8;
+      box-shadow: 3px 3px 0 #bef264;
+    }
+
+    .stat-label {
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #57534e;
+      font-weight: 900;
+      margin-bottom: 2px;
+    }
+
+    .stat-value {
+      font-size: 1.28rem;
+      font-weight: 700;
+      color: var(--ink);
+      line-height: 1.1;
+    }
+
+    /* Caja del regalo secreto al alcanzar los 67 puntos */
+    .crown-banner {
+      font-size: 2.2rem;
+      line-height: 1;
+      margin-bottom: 6px;
+      animation: floatBob 1.6s ease-in-out infinite;
+    }
+
+    .premio-box {
+      background: #fff8fa;
+      border: 3px dashed var(--pink-hot);
+      border-radius: 20px;
+      padding: 15px 14px;
+      margin-bottom: 16px;
+      font-family: 'Nunito', sans-serif;
+      font-size: 1rem;
+      font-weight: 900;
+      line-height: 1.45;
+      color: var(--ink);
+      box-shadow: inset 0 0 0 3px #ffe5ec;
+    }
+
+    /* Acciones de la tarjeta de victoria */
+    .win-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    /* Botón principal estilo píldora rosa pastel brillante */
+    .btn-primary {
+      width: 100%;
+      padding: 14px 22px;
+      border: 3px solid var(--ink);
+      border-radius: 999px;
+      background: linear-gradient(180deg, #ff7098 0%, #ff5c8a 100%);
+      color: #ffffff;
+      font-family: 'Fredoka', sans-serif;
+      font-size: 1.16rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      box-shadow: 0 5px 0 var(--ink);
+      text-shadow: 0 1.5px 0 rgba(35, 31, 32, 0.35);
+      transition: transform 0.08s ease, box-shadow 0.08s ease, opacity 0.2s ease, filter 0.15s ease;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      filter: brightness(1.05);
+    }
+
+    .btn-primary:active:not(:disabled) {
+      transform: translateY(4px);
+      box-shadow: 0 1px 0 var(--ink);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.65;
+      cursor: default;
+    }
+
+    .btn-primary.turbo-btn {
+      background: linear-gradient(180deg, #ff9f1c 0%, #ff5c8a 100%);
+      color: #ffffff;
+      font-size: 1.06rem;
+      padding: 14px 16px;
+      box-shadow: 0 5px 0 var(--ink);
+      text-shadow: 0 1.5px 0 rgba(35, 31, 32, 0.35);
+    }
+
+    .btn-reset-secondary {
+      width: 100%;
+      padding: 11px 18px;
+      border-radius: 999px;
+      border: 2.5px solid var(--ink);
+      background: #dcf6ff;
+      color: var(--ink);
+      font-family: 'Fredoka', sans-serif;
+      font-size: 0.98rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 3px 0 var(--ink);
+      transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.15s ease, opacity 0.2s ease;
+    }
+
+    .btn-reset-secondary:hover:not(:disabled) {
+      background: #bae8ff;
+    }
+
+    .btn-reset-secondary:active:not(:disabled) {
+      transform: translateY(2px);
+      box-shadow: 0 1px 0 var(--ink);
+    }
+
+    .btn-reset-secondary:disabled {
+      opacity: 0.65;
+      cursor: default;
+    }
+
+    /* Probador local discreto: SOLO aparece si prima.jpg no se encuentra */
+    #photo-tester {
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 2px dashed rgba(35, 31, 32, 0.16);
+    }
+
+    .btn-secondary {
+      width: 100%;
+      padding: 9px 14px;
+      border-radius: 999px;
+      border: 2.5px dashed var(--ink);
+      background: #dcf6ff;
+      color: var(--ink);
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.86rem;
+      font-weight: 900;
+      cursor: pointer;
+      transition: background 0.15s ease, transform 0.1s ease;
+    }
+
+    .btn-secondary:hover {
+      background: #bae8ff;
+    }
+
+    .btn-secondary:active {
+      transform: scale(0.97);
+    }
+
+    .tester-note {
+      font-size: 0.72rem !important;
+      font-weight: 700 !important;
+      line-height: 1.35 !important;
+      color: #64748b !important;
+      margin-top: 6px !important;
+      margin-bottom: 0 !important;
+    }
+
+    .tester-note code {
+      background: #ffe5ec;
+      color: var(--ink);
+      padding: 1px 5px;
+      border-radius: 6px;
+      font-weight: 800;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Canvas global para confeti, corazones, aguacates y caquitas al ganar -->
+  <canvas id="celebration-canvas"></canvas>
+
+  <div id="game-shell">
+    <div id="canvas-wrapper">
+      <!-- Lienzo principal del minijuego -->
+      <canvas id="game"></canvas>
+
+      <!-- HUD superior -->
+      <div id="hud" class="hidden">
+        <div class="hud-left">
+          <div class="score-pill" id="score-pill">
+            <div class="score-pill-row">
+              <span id="hud-score-icon">💖</span>
+              <span class="score-current" id="hud-score-num">0</span>
+              <span id="hud-score-sep">/</span>
+              <span id="hud-goal-num">67</span>
+              <span class="turbo-tag hidden" id="hud-turbo-tag">TURBO x1.0</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill" id="progress-fill"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hud-right">
+          <div class="best-badge" title="Mejor puntuación">
+            <span>🏆</span>
+            <span id="hud-best">0</span>
+          </div>
+          <button
+            id="mute-btn"
+            class="icon-btn"
+            type="button"
+            aria-label="Activar o silenciar sonido"
+            title="Sonido"
+          >🔊</button>
+        </div>
+      </div>
+
+      <!-- Indicador flotante antes del primer toque -->
+      <div id="ready-hint" class="hidden">
+        <div class="ready-badge" id="ready-badge-text">👆 ¡Toca para volar, Rociito!</div>
+      </div>
+
+      <!-- Pantallas superpuestas -->
+      <div id="overlay">
+        <!-- 1. PANTALLA DE INICIO -->
+        <div class="card" id="start-card">
+          <div class="avatar-preview-wrap">
+            <canvas id="avatar-preview-canvas" width="192" height="192"></canvas>
+          </div>
+          <div class="card-tag">✨ Mini-Regalo Especial ✨</div>
+          <h1 id="start-title">💖 Flappy Rociito 🥑</h1>
+          <p id="start-desc">
+            ¡Hola, <strong>Rociito</strong>! Toca la pantalla para volar y esquiva los tubos rosas.<br /><br />
+            Llega a <span class="goal-pill">67 puntos</span> para abrir tu regalo sorpresa.
+          </p>
+          <button class="btn-primary" id="btn-start" type="button">¡Empezar!</button>
+
+          <!-- Botón discreto de prueba local: solo visible si prima.jpg no carga -->
+          <div id="photo-tester" class="hidden">
+            <input type="file" id="photo-input" accept="image/*" class="hidden" />
+            <button class="btn-secondary" id="btn-test-photo" type="button">
+              📸 Probar con la foto de Rociito
+            </button>
+            <p class="tester-note">
+              Al subir <code>index.html</code> junto con <code id="photo-filename-hint">prima.jpg</code> a GitHub Pages, cargará sola y este botón desaparecerá.
+            </p>
+          </div>
+        </div>
+
+        <!-- 2. PANTALLA DE GAME OVER -->
+        <div class="card hidden" id="gameover-card">
+          <h1>💥 ¡Ups, qué golpe!</h1>
+          <p id="gameover-msg">¡Casi! Un toque más suave y lo bordas.</p>
+          <div class="stats-grid">
+            <div class="stat-box pink-stat">
+              <div class="stat-label">Puntos</div>
+              <div class="stat-value" id="go-score">0</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">Récord</div>
+              <div class="stat-value" id="go-best">0</div>
+            </div>
+            <div class="stat-box green-stat">
+              <div class="stat-label">Progreso</div>
+              <div class="stat-value" id="go-pct">0%</div>
+            </div>
+          </div>
+          <button class="btn-primary" id="btn-retry" type="button">Reintentar</button>
+        </div>
+
+        <!-- 3. PANTALLA DE VICTORIA (META: 67 PUNTOS) -->
+        <div class="card win-card-style hidden" id="win-card">
+          <div class="crown-banner">👑💖🥑</div>
+          <h1 id="win-title">🎉 ¡LO CONSEGUISTE, ROCIITO! 👑</h1>
+          <p id="win-subtitle">¡67 puntos conseguidos! Te has ganado tu sorpresa:</p>
+          <div class="premio-box" id="prize-text"></div>
+          <div class="win-actions">
+            <button class="btn-primary turbo-btn" id="btn-continue-turbo" type="button">🔥 ¡Seguir jugando! (Modo Turbo)</button>
+            <button class="btn-reset-secondary" id="btn-play-again" type="button">🔄 Empezar de cero</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* =========================================================================
+       🎁 CONFIGURACIÓN PRINCIPAL — EDITA AQUÍ PARA PERSONALIZAR EL REGALO
+       ========================================================================= */
+    const CONFIG = {
+      // Nombre de tu prima
+      NOMBRE_PRIMA: 'Rociito',
+
+      // Archivo de imagen en la misma carpeta que este index.html
+      FOTO_URL: 'prima.jpg',
+
+      // true -> Quita automáticamente el fondo negro sólido de prima.jpg (respetando pelo y ropa oscura)
+      QUITAR_FONDO_NEGRO: true,
+
+      // true -> Añade un borde blanco nítido estilo pegatina alrededor del pajarito
+      BORDE_STICKER: true,
+
+      // Puntos exactos para desbloquear el regalo (dificultad constante del 0 al 67)
+      META_PUNTOS: 67,
+
+      // ✏️ EDITA AQUÍ EL MENSAJE SECRETO, PISTA O VALE DEL REGALO:
+      MENSAJE_PREMIO: '🎁 ¡BRAVO! No hay regalo:), espero que te haya gustado. 💖🥑💩',
+
+      // Físicas y dificultad CONSTANTES (del 0 al 67 nunca acelera ni se estrecha el hueco)
+      GRAVEDAD: 0.33,
+      IMPULSO_SALTO: -6.45,
+      VELOCIDAD_MAX_CAIDA: 8.2,
+      VELOCIDAD_TUBOS: 2.35,
+      ANCHO_TUBOS: 62,
+      HUECO_TUBOS: 162,
+      DISTANCIA_TUBOS: 218,
+      HITBOX_RADIO: 15.5,
+
+      // Escalado progresivo del Modo Turbo (solo activo tras continuar desde 67)
+      TURBO_VEL_PASO: 0.055,
+      TURBO_VEL_MAX: 4.45,
+      TURBO_HUECO_PASO: 1.5,
+      TURBO_HUECO_MIN: 118,
+      TURBO_DIST_PASO: 1.6,
+      TURBO_DIST_MIN: 168,
+      TURBO_TUBOS_MOVILES_DESDE: 75
+    };
+
+    /* =========================================================================
+       CONSTANTES DEL LIENZO LÓGICO (PROPORCIÓN 9:16 MÓVIL)
+       ========================================================================= */
+    const LOGICAL_W = 360;
+    const LOGICAL_H = 640;
+    const GROUND_H = 84;
+    const BIRD_X = 102;
+    const BIRD_VISUAL_SIZE = 66;
+    const STORAGE_BEST_KEY = 'flappy_rociito_best_v1';
+    const STORAGE_MUTE_KEY = 'flappy_rociito_muted_v1';
+
+    /* =========================================================================
+       REFERENCIAS DEL DOM
+       ========================================================================= */
+    const canvasWrapper = document.getElementById('canvas-wrapper');
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+
+    const celebCanvas = document.getElementById('celebration-canvas');
+    const celebCtx = celebCanvas.getContext('2d');
+
+    const previewCanvas = document.getElementById('avatar-preview-canvas');
+    const previewCtx = previewCanvas.getContext('2d');
+
+    const hudEl = document.getElementById('hud');
+    const scorePillEl = document.getElementById('score-pill');
+    const hudScoreIconEl = document.getElementById('hud-score-icon');
+    const hudScoreNumEl = document.getElementById('hud-score-num');
+    const hudScoreSepEl = document.getElementById('hud-score-sep');
+    const hudGoalNumEl = document.getElementById('hud-goal-num');
+    const hudTurboTagEl = document.getElementById('hud-turbo-tag');
+    const hudBestEl = document.getElementById('hud-best');
+    const progressFillEl = document.getElementById('progress-fill');
+    const muteBtn = document.getElementById('mute-btn');
+    const readyHintEl = document.getElementById('ready-hint');
+    const readyBadgeTextEl = document.getElementById('ready-badge-text');
+
+    const overlayEl = document.getElementById('overlay');
+    const startCard = document.getElementById('start-card');
+    const gameoverCard = document.getElementById('gameover-card');
+    const winCard = document.getElementById('win-card');
+
+    const startTitleEl = document.getElementById('start-title');
+    const startDescEl = document.getElementById('start-desc');
+    const photoTesterEl = document.getElementById('photo-tester');
+    const photoInputEl = document.getElementById('photo-input');
+    const btnTestPhoto = document.getElementById('btn-test-photo');
+    const photoFilenameHintEl = document.getElementById('photo-filename-hint');
+
+    const gameoverMsgEl = document.getElementById('gameover-msg');
+    const goScoreEl = document.getElementById('go-score');
+    const goBestEl = document.getElementById('go-best');
+    const goPctEl = document.getElementById('go-pct');
+
+    const winTitleEl = document.getElementById('win-title');
+    const winSubtitleEl = document.getElementById('win-subtitle');
+    const prizeTextEl = document.getElementById('prize-text');
+
+    const btnStart = document.getElementById('btn-start');
+    const btnRetry = document.getElementById('btn-retry');
+    const btnContinueTurbo = document.getElementById('btn-continue-turbo');
+    const btnPlayAgain = document.getElementById('btn-play-again');
+
+    /* =========================================================================
+       AUDIO SINTETIZADO KAWAII (WEB AUDIO API — SIN ARCHIVOS EXTERNOS)
+       ========================================================================= */
+    const SoundFX = (() => {
+      let audioCtx = null;
+      let muted = false;
+
+      try {
+        muted = localStorage.getItem(STORAGE_MUTE_KEY) === '1';
+      } catch (_) {
+        muted = false;
+      }
+
+      function ensureContext() {
+        try {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (!AudioCtx) return null;
+          if (!audioCtx) audioCtx = new AudioCtx();
+          if (audioCtx.state === 'suspended') audioCtx.resume();
+          return audioCtx;
+        } catch (_) {
+          return null;
+        }
+      }
+
+      function updateMuteIcon() {
+        muteBtn.textContent = muted ? '🔇' : '🔊';
+      }
+
+      function toggleMute() {
+        muted = !muted;
+        try {
+          localStorage.setItem(STORAGE_MUTE_KEY, muted ? '1' : '0');
+        } catch (_) {}
+        updateMuteIcon();
+        if (!muted) playFlap();
+      }
+
+      // Pompita / pop adorable al saltar
+      function playFlap() {
+        if (muted) return;
+        const ac = ensureContext();
+        if (!ac) return;
+        const now = ac.currentTime;
+        const osc = ac.createOscillator();
+        const gain = ac.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(340, now);
+        osc.frequency.exponentialRampToValueAtTime(680, now + 0.09);
+
+        gain.gain.setValueAtTime(0.001, now);
+        gain.gain.linearRampToValueAtTime(0.15, now + 0.015);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.11);
+
+        osc.connect(gain);
+        gain.connect(ac.destination);
+        osc.start(now);
+        osc.stop(now + 0.12);
+      }
+
+      // Campanita dulce al sumar punto
+      function playPoint() {
+        if (muted) return;
+        const ac = ensureContext();
+        if (!ac) return;
+        const now = ac.currentTime;
+        const freqs = [880, 1318.5];
+
+        freqs.forEach((f, idx) => {
+          const osc = ac.createOscillator();
+          const gain = ac.createGain();
+          const t = now + idx * 0.055;
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(f, t);
+
+          gain.gain.setValueAtTime(0.001, t);
+          gain.gain.linearRampToValueAtTime(0.13, t + 0.012);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.19);
+
+          osc.connect(gain);
+          gain.connect(ac.destination);
+          osc.start(t);
+          osc.stop(t + 0.2);
+        });
+      }
+
+      // Acorde brillante en hitos (10, 20, 30, 40, 50, 60, 65 y Turbo)
+      function playMilestone() {
+        if (muted) return;
+        const ac = ensureContext();
+        if (!ac) return;
+        const now = ac.currentTime;
+        const chord = [659.25, 830.61, 987.77, 1318.51];
+
+        chord.forEach((f, i) => {
+          const osc = ac.createOscillator();
+          const gain = ac.createGain();
+          const t = now + i * 0.045;
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(f, t);
+
+          gain.gain.setValueAtTime(0.001, t);
+          gain.gain.linearRampToValueAtTime(0.12, t + 0.015);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.34);
+
+          osc.connect(gain);
+          gain.connect(ac.destination);
+          osc.start(t);
+          osc.stop(t + 0.36);
+        });
+      }
+
+      // Subidón brillante al activar el Modo Turbo
+      function playTurboStart() {
+        if (muted) return;
+        const ac = ensureContext();
+        if (!ac) return;
+        const now = ac.currentTime;
+        const arp = [523.25, 659.25, 783.99, 1046.5, 1318.51];
+
+        arp.forEach((f, i) => {
+          const osc = ac.createOscillator();
+          const gain = ac.createGain();
+          const t = now + i * 0.05;
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(f, t);
+          osc.frequency.exponentialRampToValueAtTime(f * 1.03, t + 0.18);
+
+          gain.gain.setValueAtTime(0.001, t);
+          gain.gain.linearRampToValueAtTime(0.14, t + 0.015);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+
+          osc.connect(gain);
+          gain.connect(ac.destination);
+          osc.start(t);
+          osc.stop(t + 0.27);
+        });
+      }
+
+      // Boing suave y cómico al chocar
+      function playHit() {
+        if (muted) return;
+        const ac = ensureContext();
+        if (!ac) return;
+        const now = ac.currentTime;
+        const osc = ac.createOscillator();
+        const gain = ac.createGain();
+
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(280, now);
+        osc.frequency.exponentialRampToValueAtTime(120, now + 0.12);
+        osc.frequency.exponentialRampToValueAtTime(195, now + 0.2);
+        osc.frequency.exponentialRampToValueAtTime(95, now + 0.34);
+
+        gain.gain.setValueAtTime(0.18, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.36);
+
+        osc.connect(gain);
+        gain.connect(ac.destination);
+        osc.start(now);
+        osc.stop(now + 0.38);
+      }
+
+      // Fanfarria súper alegre al llegar a 67
+      function playWinFanfare() {
+        if (muted) return;
+        const ac = ensureContext();
+        if (!ac) return;
+        const now = ac.currentTime;
+
+        const notes = [
+          { f: 523.25, t: 0.00, d: 0.13 },
+          { f: 659.25, t: 0.11, d: 0.13 },
+          { f: 783.99, t: 0.22, d: 0.13 },
+          { f: 1046.50, t: 0.33, d: 0.22 },
+          { f: 880.00, t: 0.52, d: 0.13 },
+          { f: 987.77, t: 0.64, d: 0.13 },
+          { f: 1046.50, t: 0.77, d: 0.52 }
+        ];
+
+        notes.forEach((n) => {
+          const osc = ac.createOscillator();
+          const sparkle = ac.createOscillator();
+          const gain = ac.createGain();
+
+          osc.type = 'triangle';
+          sparkle.type = 'sine';
+          osc.frequency.setValueAtTime(n.f, now + n.t);
+          sparkle.frequency.setValueAtTime(n.f * 2, now + n.t);
+
+          gain.gain.setValueAtTime(0.001, now + n.t);
+          gain.gain.linearRampToValueAtTime(0.15, now + n.t + 0.018);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + n.t + n.d);
+
+          osc.connect(gain);
+          sparkle.connect(gain);
+          gain.connect(ac.destination);
+
+          osc.start(now + n.t);
+          sparkle.start(now + n.t);
+          osc.stop(now + n.t + n.d + 0.02);
+          sparkle.stop(now + n.t + n.d + 0.02);
+        });
+      }
+
+      updateMuteIcon();
+      return {
+        ensureContext,
+        toggleMute,
+        playFlap,
+        playPoint,
+        playMilestone,
+        playTurboStart,
+        playHit,
+        playWinFanfare
+      };
+    })();
+
+    /* =========================================================================
+       ESTADO GLOBAL DEL JUEGO
+       ========================================================================= */
+    // Estados: 'START' | 'READY' | 'PLAYING' | 'GAMEOVER' | 'WIN'
+    let gameState = 'START';
+    let lastTimestamp = 0;
+    let elapsed60 = 0;
+    let retryUnlockAt = 0;
+    let retryTimerId = null;
+
+    // Estado del pajarito (con inclinación suave y squash-and-stretch)
+    const bird = {
+      x: BIRD_X,
+      y: LOGICAL_H * 0.44,
+      vy: 0,
+      rotation: 0,
+      scaleX: 1,
+      scaleY: 1,
+      flapWave: 0
+    };
+
+    // Obstáculos, puntuación, récord y bandera del Modo Turbo
+    let pipes = [];
+    let distanceSincePipe = 0;
+    let lastPipeTop = 185;
+    let score = 0;
+    let bestScore = 0;
+    let turboMode = false;
+    let firstMobilePipeSpawned = false;
+    let turboTrailAccum = 0;
+
+    try {
+      bestScore = parseInt(localStorage.getItem(STORAGE_BEST_KEY) || '0', 10) || 0;
+    } catch (_) {
+      bestScore = 0;
+    }
+
+    // Elementos de escenario, partículas, mensajes de hito y celebración
+    let clouds = [];
+    let bgIcons = [];
+    let windLines = [];
+    let particles = [];
+    let cheerPopups = [];
+    let celebrationItems = [];
+    let groundScroll = 0;
+    let screenShake = 0;
+
+    // Sprite procesado y cacheado en canvas offscreen
+    let cachedBirdSprite = null;
+
+    /* =========================================================================
+       PARÁMETROS DE DIFICULTAD (CONSTANTES 0..67, PROGRESIVOS EN MODO TURBO)
+       ========================================================================= */
+    function getTurboExtraPoints() {
+      return turboMode ? Math.max(0, score - CONFIG.META_PUNTOS) : 0;
+    }
+
+    function getCurrentPipeSpeed() {
+      if (!turboMode) return CONFIG.VELOCIDAD_TUBOS;
+      const extra = getTurboExtraPoints();
+      return Math.min(
+        CONFIG.TURBO_VEL_MAX,
+        CONFIG.VELOCIDAD_TUBOS + extra * CONFIG.TURBO_VEL_PASO
+      );
+    }
+
+    function getCurrentPipeGap() {
+      if (!turboMode) return CONFIG.HUECO_TUBOS;
+      const extra = getTurboExtraPoints();
+      return Math.max(
+        CONFIG.TURBO_HUECO_MIN,
+        CONFIG.HUECO_TUBOS - extra * CONFIG.TURBO_HUECO_PASO
+      );
+    }
+
+    function getCurrentPipeDistance() {
+      if (!turboMode) return CONFIG.DISTANCIA_TUBOS;
+      const extra = getTurboExtraPoints();
+      return Math.max(
+        CONFIG.TURBO_DIST_MIN,
+        CONFIG.DISTANCIA_TUBOS - extra * CONFIG.TURBO_DIST_PASO
+      );
+    }
+
+    function getTurboSpeedMultiplier() {
+      return getCurrentPipeSpeed() / CONFIG.VELOCIDAD_TUBOS;
+    }
+
+    /* =========================================================================
+       PROCESADO INTELIGENTE DE `prima.jpg` (FLOOD-FILL BFS + AUTO-CROP + STICKER)
+       ========================================================================= */
+    function processBirdImage(img) {
+      try {
+        const origW = img.naturalWidth || img.width;
+        const origH = img.naturalHeight || img.height;
+        if (!origW || !origH) return null;
+
+        // Limitamos a 512px para que el flood-fill sea instantáneo incluso en móviles
+        const maxProcessDim = 512;
+        const scale = Math.min(1, maxProcessDim / Math.max(origW, origH));
+        const w = Math.max(1, Math.round(origW * scale));
+        const h = Math.max(1, Math.round(origH * scale));
+
+        const workCanvas = document.createElement('canvas');
+        workCanvas.width = w;
+        workCanvas.height = h;
+        const wCtx = workCanvas.getContext('2d', { willReadFrequently: true });
+        wCtx.drawImage(img, 0, 0, w, h);
+
+        // Si se abre con file:// puede lanzar SecurityError -> capturado en catch
+        const imgData = wCtx.getImageData(0, 0, w, h);
+        const data = imgData.data;
+
+        if (CONFIG.QUITAR_FONDO_NEGRO) {
+          const total = w * h;
+          const visited = new Uint8Array(total);
+          const isBg = new Uint8Array(total);
+          const queue = new Int32Array(total);
+          let head = 0;
+          let tail = 0;
+
+          const isNearBlack = (idx) => {
+            const p = idx * 4;
+            return data[p] < 18 && data[p + 1] < 18 && data[p + 2] < 18;
+          };
+
+          const enqueueIfBlack = (x, y) => {
+            const idx = y * w + x;
+            if (!visited[idx] && isNearBlack(idx)) {
+              visited[idx] = 1;
+              isBg[idx] = 1;
+              queue[tail++] = idx;
+            }
+          };
+
+          // Sembramos el BFS únicamente desde los bordes exteriores de la imagen
+          for (let x = 0; x < w; x++) {
+            enqueueIfBlack(x, 0);
+            enqueueIfBlack(x, h - 1);
+          }
+          for (let y = 1; y < h - 1; y++) {
+            enqueueIfBlack(0, y);
+            enqueueIfBlack(w - 1, y);
+          }
+
+          // Expansión BFS 4-vecinos: conserva intactos pelo negro y camiseta interior
+          while (head < tail) {
+            const idx = queue[head++];
+            const x = idx % w;
+            const y = (idx - x) / w;
+
+            if (x > 0) {
+              const n = idx - 1;
+              if (!visited[n] && isNearBlack(n)) {
+                visited[n] = 1; isBg[n] = 1; queue[tail++] = n;
+              }
+            }
+            if (x < w - 1) {
+              const n = idx + 1;
+              if (!visited[n] && isNearBlack(n)) {
+                visited[n] = 1; isBg[n] = 1; queue[tail++] = n;
+              }
+            }
+            if (y > 0) {
+              const n = idx - w;
+              if (!visited[n] && isNearBlack(n)) {
+                visited[n] = 1; isBg[n] = 1; queue[tail++] = n;
+              }
+            }
+            if (y < h - 1) {
+              const n = idx + w;
+              if (!visited[n] && isNearBlack(n)) {
+                visited[n] = 1; isBg[n] = 1; queue[tail++] = n;
+              }
+            }
+          }
+
+          // Transparencia total para el fondo exterior detectado
+          for (let i = 0; i < total; i++) {
+            if (isBg[i]) {
+              data[i * 4 + 3] = 0;
+            }
+          }
+
+          // Suavizado anti-aliasing de 1 pasada en el borde contiguo al fondo
+          for (let y = 1; y < h - 1; y++) {
+            for (let x = 1; x < w - 1; x++) {
+              const idx = y * w + x;
+              if (isBg[idx]) continue;
+
+              const touchesBg =
+                isBg[idx - 1] || isBg[idx + 1] ||
+                isBg[idx - w] || isBg[idx + w] ||
+                isBg[idx - w - 1] || isBg[idx - w + 1] ||
+                isBg[idx + w - 1] || isBg[idx + w + 1];
+
+              if (touchesBg) {
+                const p = idx * 4;
+                const maxCh = Math.max(data[p], data[p + 1], data[p + 2]);
+                if (maxCh < 28) {
+                  data[p + 3] = 0;
+                } else if (maxCh < 54) {
+                  const factor = (maxCh - 28) / 26;
+                  data[p + 3] = Math.round(data[p + 3] * factor);
+                }
+              }
+            }
+          }
+
+          wCtx.putImageData(imgData, 0, 0);
+        }
+
+        // Auto-recorte al bounding box no transparente
+        let minX = w;
+        let minY = h;
+        let maxX = -1;
+        let maxY = -1;
+
+        for (let y = 0; y < h; y++) {
+          for (let x = 0; x < w; x++) {
+            if (data[(y * w + x) * 4 + 3] > 24) {
+              if (x < minX) minX = x;
+              if (x > maxX) maxX = x;
+              if (y < minY) minY = y;
+              if (y > maxY) maxY = y;
+            }
+          }
+        }
+
+        if (maxX < minX || maxY < minY) {
+          minX = 0; minY = 0; maxX = w - 1; maxY = h - 1;
+        }
+
+        const cropW = maxX - minX + 1;
+        const cropH = maxY - minY + 1;
+
+        const cropCanvas = document.createElement('canvas');
+        cropCanvas.width = cropW;
+        cropCanvas.height = cropH;
+        const cCtx = cropCanvas.getContext('2d');
+        cCtx.drawImage(workCanvas, minX, minY, cropW, cropH, 0, 0, cropW, cropH);
+
+        if (!CONFIG.BORDE_STICKER) {
+          return cropCanvas;
+        }
+
+        // Borde blanco nítido estilo pegatina de vinilo con perfil oscuro exterior
+        const borderPx = Math.max(4, Math.round(Math.max(cropW, cropH) * 0.036));
+        const pad = borderPx + 4;
+        const outW = cropW + pad * 2;
+        const outH = cropH + pad * 2;
+
+        const silCanvas = document.createElement('canvas');
+        silCanvas.width = cropW;
+        silCanvas.height = cropH;
+        const sCtx = silCanvas.getContext('2d');
+        sCtx.drawImage(cropCanvas, 0, 0);
+        sCtx.globalCompositeOperation = 'source-in';
+        sCtx.fillStyle = '#ffffff';
+        sCtx.fillRect(0, 0, cropW, cropH);
+
+        const darkSilCanvas = document.createElement('canvas');
+        darkSilCanvas.width = cropW;
+        darkSilCanvas.height = cropH;
+        const dCtx = darkSilCanvas.getContext('2d');
+        dCtx.drawImage(cropCanvas, 0, 0);
+        dCtx.globalCompositeOperation = 'source-in';
+        dCtx.fillStyle = 'rgba(35, 31, 32, 0.72)';
+        dCtx.fillRect(0, 0, cropW, cropH);
+
+        const outCanvas = document.createElement('canvas');
+        outCanvas.width = outW;
+        outCanvas.height = outH;
+        const oCtx = outCanvas.getContext('2d');
+
+        const steps = 16;
+        const outerR = borderPx + Math.max(1.5, borderPx * 0.22);
+        for (let i = 0; i < steps; i++) {
+          const ang = (Math.PI * 2 * i) / steps;
+          oCtx.drawImage(darkSilCanvas, pad + Math.cos(ang) * outerR, pad + Math.sin(ang) * outerR);
+        }
+
+        for (let i = 0; i < steps; i++) {
+          const ang = (Math.PI * 2 * i) / steps;
+          oCtx.drawImage(silCanvas, pad + Math.cos(ang) * borderPx, pad + Math.sin(ang) * borderPx);
+        }
+        for (let i = 0; i < 8; i++) {
+          const ang = (Math.PI * 2 * i) / 8;
+          oCtx.drawImage(silCanvas, pad + Math.cos(ang) * (borderPx * 0.52), pad + Math.sin(ang) * (borderPx * 0.52));
+        }
+
+        oCtx.drawImage(cropCanvas, pad, pad);
+        return outCanvas;
+      } catch (_) {
+        // Fallback limpio si se abre con file:// (canvas taint): insignia circular sticker rosa pastel
+        return createCircularBadgeFallback(img);
+      }
+    }
+
+    function createCircularBadgeFallback(img) {
+      const size = 240;
+      const badge = document.createElement('canvas');
+      badge.width = size;
+      badge.height = size;
+      const bCtx = badge.getContext('2d');
+      const cx = size / 2;
+      const cy = size / 2;
+      const r = size * 0.42;
+
+      bCtx.save();
+      bCtx.beginPath();
+      bCtx.arc(cx, cy, r, 0, Math.PI * 2);
+      bCtx.closePath();
+      bCtx.save();
+      bCtx.clip();
+
+      const iw = img.naturalWidth || img.width;
+      const ih = img.naturalHeight || img.height;
+      const side = Math.min(iw, ih);
+      const sx = (iw - side) * 0.5;
+      const sy = (ih - side) * 0.45;
+      bCtx.drawImage(img, sx, sy, side, side, cx - r, cy - r, r * 2, r * 2);
+      bCtx.restore();
+
+      bCtx.lineWidth = 10;
+      bCtx.strokeStyle = '#ffffff';
+      bCtx.beginPath();
+      bCtx.arc(cx, cy, r, 0, Math.PI * 2);
+      bCtx.stroke();
+
+      bCtx.lineWidth = 6;
+      bCtx.strokeStyle = '#ff8fab';
+      bCtx.beginPath();
+      bCtx.arc(cx, cy, r + 5, 0, Math.PI * 2);
+      bCtx.stroke();
+
+      bCtx.lineWidth = 4;
+      bCtx.strokeStyle = '#231f20';
+      bCtx.beginPath();
+      bCtx.arc(cx, cy, r + 8, 0, Math.PI * 2);
+      bCtx.stroke();
+      bCtx.restore();
+
+      return badge;
+    }
+
+    /* =========================================================================
+       CARGA DE `prima.jpg` + PROBADOR LOCAL CON FileReader (SI NO EXISTE AÚN)
+       ========================================================================= */
+    function loadConfiguredPhoto() {
+      if (!CONFIG.FOTO_URL) {
+        photoTesterEl.classList.remove('hidden');
+        renderAvatarPreview();
+        return;
+      }
+
+      const img = new Image();
+      img.onload = () => {
+        cachedBirdSprite = processBirdImage(img);
+        photoTesterEl.classList.add('hidden');
+        renderAvatarPreview();
+      };
+      img.onerror = () => {
+        cachedBirdSprite = null;
+        photoTesterEl.classList.remove('hidden');
+        renderAvatarPreview();
+      };
+      img.src = CONFIG.FOTO_URL;
+    }
+
+    btnTestPhoto.addEventListener('click', (e) => {
+      e.stopPropagation();
+      photoInputEl.click();
+    });
+
+    photoInputEl.addEventListener('change', (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const localImg = new Image();
+        localImg.onload = () => {
+          cachedBirdSprite = processBirdImage(localImg);
+          btnTestPhoto.textContent = '📸 Probar otra foto de Rociito';
+          renderAvatarPreview();
+        };
+        localImg.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    /* =========================================================================
+       TEXTOS PERSONALIZADOS CON CONFIG Y ACTUALIZACIÓN DEL HUD
+       ========================================================================= */
+    function escapeHTML(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function applyConfigToUI() {
+      const nombre = (CONFIG.NOMBRE_PRIMA || 'Rociito').trim();
+      document.title = `💖 Flappy ${nombre} 🥑`;
+      startTitleEl.textContent = `💖 Flappy ${nombre} 🥑`;
+      startDescEl.innerHTML =
+        `¡Hola, <strong>${escapeHTML(nombre)}</strong>! Toca la pantalla para volar y esquiva los tubos rosas.<br /><br />` +
+        `Llega a <span class="goal-pill">${CONFIG.META_PUNTOS} puntos</span> para abrir tu regalo sorpresa.`;
+
+      readyBadgeTextEl.textContent = `👆 ¡Toca para volar, ${nombre}!`;
+      hudGoalNumEl.textContent = String(CONFIG.META_PUNTOS);
+      winTitleEl.textContent = `🎉 ¡LO CONSEGUISTE, ${nombre.toUpperCase()}! 👑`;
+      winSubtitleEl.textContent = `¡${CONFIG.META_PUNTOS} puntos conseguidos! Te has ganado tu sorpresa:`;
+      prizeTextEl.textContent = CONFIG.MENSAJE_PREMIO;
+      photoFilenameHintEl.textContent = CONFIG.FOTO_URL;
+
+      updateHUD();
+    }
+
+    function updateHUD() {
+      hudScoreNumEl.textContent = String(score);
+      hudBestEl.textContent = String(bestScore);
+
+      if (turboMode) {
+        scorePillEl.classList.add('turbo-pill');
+        hudScoreIconEl.textContent = '🔥';
+        hudScoreSepEl.classList.add('hidden');
+        hudGoalNumEl.classList.add('hidden');
+        hudTurboTagEl.classList.remove('hidden');
+
+        const mult = getTurboSpeedMultiplier();
+        hudTurboTagEl.textContent = `TURBO x${mult.toFixed(1)}`;
+
+        progressFillEl.style.width = '100%';
+        progressFillEl.classList.add('turbo-active');
+      } else {
+        scorePillEl.classList.remove('turbo-pill');
+        hudScoreIconEl.textContent = '💖';
+        hudScoreSepEl.classList.remove('hidden');
+        hudGoalNumEl.classList.remove('hidden');
+        hudTurboTagEl.classList.add('hidden');
+
+        const pct = Math.min(100, Math.round((score / Math.max(1, CONFIG.META_PUNTOS)) * 100));
+        progressFillEl.style.width = `${pct}%`;
+        progressFillEl.classList.remove('turbo-active');
+      }
+    }
+
+    /* =========================================================================
+       REDIMENSIONAMIENTO RESPONSIVO Y NITIDEZ HiDPI (devicePixelRatio)
+       ========================================================================= */
+    function resizeCanvases() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 3);
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const isDesktop = vw >= 500 && vh >= 680;
+      const pad = isDesktop ? 32 : 0;
+
+      const availW = Math.max(240, vw - pad);
+      const availH = Math.max(360, vh - pad);
+      const targetAspect = LOGICAL_W / LOGICAL_H;
+
+      let cssW;
+      let cssH;
+      if (availW / availH > targetAspect) {
+        cssH = availH;
+        cssW = Math.floor(cssH * targetAspect);
+      } else {
+        cssW = availW;
+        cssH = Math.floor(cssW / targetAspect);
+      }
+
+      canvasWrapper.style.width = `${cssW}px`;
+      canvasWrapper.style.height = `${cssH}px`;
+
+      canvas.width = Math.round(cssW * dpr);
+      canvas.height = Math.round(cssH * dpr);
+      ctx.setTransform(canvas.width / LOGICAL_W, 0, 0, canvas.height / LOGICAL_H, 0, 0);
+
+      celebCanvas.width = Math.round(vw * dpr);
+      celebCanvas.height = Math.round(vh * dpr);
+      celebCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    /* =========================================================================
+       ESCENARIO KAWAII PARALLAX (NUBES, AGUACATES, CAQUITAS, CORAZONES, VIENTO)
+       ========================================================================= */
+    function initParallaxWorld() {
+      clouds = [
+        { x: 45,  y: 78,  scale: 0.92, speed: 0.22 },
+        { x: 215, y: 122, scale: 0.72, speed: 0.16 },
+        { x: 340, y: 68,  scale: 0.85, speed: 0.20 },
+        { x: 120, y: 210, scale: 0.62, speed: 0.13 },
+        { x: 295, y: 245, scale: 0.78, speed: 0.18 }
+      ];
+
+      const types = [
+        'avocado', 'poop', 'heart', 'sparkle',
+        'avocado', 'poop', 'heart', 'sparkle',
+        'avocado', 'poop', 'heart', 'sparkle'
+      ];
+
+      bgIcons = types.map((type, idx) => ({
+        type,
+        x: (idx * (LOGICAL_W / types.length) + Math.random() * 26) % (LOGICAL_W + 40) - 20,
+        y: 62 + ((idx * 57) % (LOGICAL_H - GROUND_H - 120)),
+        size: type === 'avocado' || type === 'poop'
+          ? 16 + (idx % 3) * 3.5
+          : 7 + (idx % 3) * 2.5,
+        speed: type === 'heart' || type === 'sparkle' ? 0.34 : 0.48,
+        phase: Math.random() * Math.PI * 2,
+        rotAmp: type === 'heart' ? 0.14 : 0.11,
+        bobAmp: 4 + Math.random() * 5
+      }));
+
+      // Líneas pastel de velocidad / viento visibles únicamente en Modo Turbo
+      windLines = Array.from({ length: 12 }, (_, idx) => ({
+        x: Math.random() * LOGICAL_W,
+        y: 44 + ((idx * 41) % (LOGICAL_H - GROUND_H - 72)),
+        len: 22 + Math.random() * 34,
+        speedFactor: 1.35 + Math.random() * 0.9,
+        sparkle: idx % 3 === 0,
+        color: idx % 2 === 0 ? '#ffffff' : '#ffe5ec'
+      }));
+    }
+
+    /* =========================================================================
+       GESTIÓN DE ESTADOS DE PARTIDA (NORMAL 0..67 Y MODO TURBO 67+)
+       ========================================================================= */
+    function resetRunState() {
+      bird.x = BIRD_X;
+      bird.y = LOGICAL_H * 0.44;
+      bird.vy = 0;
+      bird.rotation = 0;
+      bird.scaleX = 1;
+      bird.scaleY = 1;
+      bird.flapWave = 0;
+
+      pipes = [];
+      particles = [];
+      cheerPopups = [];
+      celebrationItems = [];
+      turboMode = false;
+      firstMobilePipeSpawned = false;
+      turboTrailAccum = 0;
+      distanceSincePipe = CONFIG.DISTANCIA_TUBOS * 0.42;
+      lastPipeTop = 190;
+      score = 0;
+      screenShake = 0;
+
+      overlayEl.classList.remove('win-backdrop');
+      updateHUD();
+    }
+
+    function enterReadyState() {
+      SoundFX.ensureContext();
+      if (retryTimerId) {
+        clearTimeout(retryTimerId);
+        retryTimerId = null;
+      }
+      btnRetry.disabled = false;
+      btnContinueTurbo.disabled = false;
+      btnPlayAgain.disabled = false;
+
+      resetRunState();
+      gameState = 'READY';
+
+      const nombre = (CONFIG.NOMBRE_PRIMA || 'Rociito').trim();
+      readyBadgeTextEl.textContent = `👆 ¡Toca para volar, ${nombre}!`;
+      readyBadgeTextEl.classList.remove('turbo-ready');
+
+      overlayEl.classList.add('hidden');
+      startCard.classList.add('hidden');
+      gameoverCard.classList.add('hidden');
+      winCard.classList.add('hidden');
+
+      hudEl.classList.remove('hidden');
+      readyHintEl.classList.remove('hidden');
+    }
+
+    // Continúa la partida desde 67 en Modo Turbo (dificultad progresiva infinita)
+    function continueTurboMode() {
+      SoundFX.ensureContext();
+      if (retryTimerId) {
+        clearTimeout(retryTimerId);
+        retryTimerId = null;
+      }
+      btnContinueTurbo.disabled = false;
+      btnPlayAgain.disabled = false;
+
+      turboMode = true;
+      score = CONFIG.META_PUNTOS;
+      firstMobilePipeSpawned = false;
+      turboTrailAccum = 0;
+
+      // Limpiamos tubos y confeti; recolocamos a Rociito en el centro de forma segura
+      pipes = [];
+      particles = [];
+      cheerPopups = [];
+      celebrationItems = [];
+      screenShake = 0;
+
+      bird.x = BIRD_X;
+      bird.y = LOGICAL_H * 0.44;
+      bird.vy = 0;
+      bird.rotation = 0;
+      bird.scaleX = 1;
+      bird.scaleY = 1;
+      bird.flapWave = 0;
+
+      distanceSincePipe = getCurrentPipeDistance() * 0.42;
+      lastPipeTop = 190;
+      gameState = 'READY';
+
+      overlayEl.classList.remove('win-backdrop');
+      overlayEl.classList.add('hidden');
+      startCard.classList.add('hidden');
+      gameoverCard.classList.add('hidden');
+      winCard.classList.add('hidden');
+
+      readyBadgeTextEl.textContent = '🔥 ¡MODO TURBO! Toca para seguir';
+      readyBadgeTextEl.classList.add('turbo-ready');
+      hudEl.classList.remove('hidden');
+      readyHintEl.classList.remove('hidden');
+
+      updateHUD();
+      SoundFX.playTurboStart();
+    }
+
+    function triggerFlap() {
+      if (gameState === 'READY') {
+        gameState = 'PLAYING';
+        readyHintEl.classList.add('hidden');
+      }
+      if (gameState !== 'PLAYING') return;
+
+      bird.vy = CONFIG.IMPULSO_SALTO;
+      bird.scaleX = 1.15;
+      bird.scaleY = 0.86;
+      bird.flapWave = 1.0;
+
+      SoundFX.playFlap();
+      spawnFlapPuff(bird.x - 16, bird.y + 8);
+    }
+
+    function triggerGameOver() {
+      if (gameState !== 'PLAYING') return;
+      gameState = 'GAMEOVER';
+      screenShake = 9;
+      SoundFX.playHit();
+      spawnHitBurst(bird.x, bird.y);
+
+      if (score > bestScore) {
+        bestScore = score;
+        try {
+          localStorage.setItem(STORAGE_BEST_KEY, String(bestScore));
+        } catch (_) {}
+      }
+      updateHUD();
+
+      const nombre = (CONFIG.NOMBRE_PRIMA || 'Rociito').trim();
+      const pct = Math.min(99, Math.round((score / Math.max(1, CONFIG.META_PUNTOS)) * 100));
+      const left = Math.max(1, CONFIG.META_PUNTOS - score);
+
+      let msg;
+      if (score >= CONFIG.META_PUNTOS) {
+        const extraPts = score - CONFIG.META_PUNTOS;
+        msg = extraPts > 0
+          ? `¡LEYENDA TOTAL, ${nombre.toUpperCase()}! 👑 Desbloqueaste el regalo y aguantaste +${extraPts} puntos en Modo Turbo (hasta ${score}) 🔥🥑`
+          : `¡GENIAL, ${nombre.toUpperCase()}! 👑 Ya desbloqueaste el regalo con ${score} puntos y te atreviste con el Modo Turbo 🔥🥑`;
+      } else if (score >= CONFIG.META_PUNTOS - 3) {
+        msg = `¡AYYY ${nombre.toUpperCase()}! 😱 ¡Solo te faltaban ${left}! ¡La próxima es tuya seguro! 💖`;
+      } else if (score >= 50) {
+        msg = `¡Brutal, ${nombre}! Ya casi tocabas el regalo (${score}/${CONFIG.META_PUNTOS}) 🔥🥑`;
+      } else if (score >= 30) {
+        msg = `¡Más de medio camino, ${nombre}! Tienes el ritmo pilladísimo ✨💖`;
+      } else if (score >= 10) {
+        msg = `¡Muy bien, ${nombre}! Vas cogiendo vuelo, ¡otra ronda y subes récord! 🌸`;
+      } else {
+        msg = `¡Calentamiento hecho, ${nombre}! Toca suavecito y verás qué fácil es 💩💖`;
+      }
+
+      gameoverMsgEl.textContent = msg;
+      goScoreEl.textContent = String(score);
+      goBestEl.textContent = String(bestScore);
+      goPctEl.textContent = score >= CONFIG.META_PUNTOS ? '100% 👑' : `${pct}%`;
+
+      // Retraso anti-toque-accidental de 450ms antes de activar "Reintentar"
+      retryUnlockAt = performance.now() + 450;
+      btnRetry.disabled = true;
+      if (retryTimerId) clearTimeout(retryTimerId);
+      retryTimerId = setTimeout(() => {
+        btnRetry.disabled = false;
+      }, 450);
+
+      readyHintEl.classList.add('hidden');
+      overlayEl.classList.remove('hidden');
+      startCard.classList.add('hidden');
+      winCard.classList.add('hidden');
+      gameoverCard.classList.remove('hidden');
+    }
+
+    function triggerWin() {
+      if (gameState !== 'PLAYING') return;
+      gameState = 'WIN';
+
+      if (score > bestScore) {
+        bestScore = score;
+        try {
+          localStorage.setItem(STORAGE_BEST_KEY, String(bestScore));
+        } catch (_) {}
+      }
+      updateHUD();
+
+      SoundFX.playWinFanfare();
+      launchVictoryCelebration();
+
+      // Bloqueo anti-toque-accidental de 500ms en ambos botones de la pantalla de victoria
+      retryUnlockAt = performance.now() + 500;
+      btnContinueTurbo.disabled = true;
+      btnPlayAgain.disabled = true;
+      if (retryTimerId) clearTimeout(retryTimerId);
+      retryTimerId = setTimeout(() => {
+        btnContinueTurbo.disabled = false;
+        btnPlayAgain.disabled = false;
+      }, 500);
+
+      readyHintEl.classList.add('hidden');
+      overlayEl.classList.remove('hidden');
+      overlayEl.classList.add('win-backdrop');
+      startCard.classList.add('hidden');
+      gameoverCard.classList.add('hidden');
+      winCard.classList.remove('hidden');
+    }
+
+    /* =========================================================================
+       HITOS DE ÁNIMO FLOTANTES (10..65 Y HITOS DE MODO TURBO)
+       ========================================================================= */
+    function checkMilestone(currentScore) {
+      const nombre = (CONFIG.NOMBRE_PRIMA || 'Rociito').trim();
+      const milestoneMap = {
+        10: `¡VAMOS ${nombre.toUpperCase()}! 💖`,
+        20: '¡20! ¡A TOPE! 🥑✨',
+        30: '¡30! ¡QUÉ CRACK! 🌸',
+        40: '¡40! ¡IMPARABLE! 💩💖',
+        50: '¡50! ¡YA QUEDA POCO! 🔥',
+        60: '¡60! ¡RECTA FINAL! 👑',
+        65: '¡SOLO 2 MÁS! 😱💖',
+        70: '¡70! ¡MODO TURBO! 🔥',
+        75: '¡75! ¡OJO, SE MUEVEN! ⚡',
+        80: '¡80! ¡REINA SUPREMA! 👑',
+        90: '¡90! ¡NIVEL DIOSA! 🚀',
+        100: '¡100! ¡LEYENDA TOTAL! 🤯💖'
+      };
+
+      let text = milestoneMap[currentScore];
+      if (!text && currentScore > 100 && currentScore % 10 === 0) {
+        text = `¡${currentScore}! ¡IMPARABLE! 🔥👑`;
+      }
+      if (!text) return false;
+
+      cheerPopups.push({
+        text,
+        x: LOGICAL_W / 2,
+        y: 162,
+        vy: -0.65,
+        life: 1.0,
+        scale: 0.45
+      });
+
+      SoundFX.playMilestone();
+      spawnMilestoneBurst(bird.x + 14, bird.y - 12);
+      return true;
+    }
+
+    /* =========================================================================
+       SISTEMA DE PARTÍCULAS PASTEL, ESTELA TURBO Y CELEBRACIÓN DE VICTORIA
+       ========================================================================= */
+    const BEAD_COLORS = ['#ff8fab', '#7dd3fc', '#86efac', '#fde047', '#d8b4fe', '#ffffff'];
+    const TURBO_SPARK_COLORS = ['#ff9f1c', '#fde047', '#ff5c8a', '#ffffff', '#7dd3fc'];
+
+    function spawnFlapPuff(x, y) {
+      const count = turboMode ? 10 : 8;
+      const palette = turboMode ? TURBO_SPARK_COLORS : BEAD_COLORS;
+      for (let i = 0; i < count; i++) {
+        const roll = Math.random();
+        const kind = roll < 0.34 ? 'heart' : roll < 0.66 ? 'sparkle' : 'bead';
+        particles.push({
+          kind,
+          x: x + (Math.random() - 0.5) * 14,
+          y: y + (Math.random() - 0.5) * 10,
+          vx: -Math.random() * (turboMode ? 2.9 : 2.1) - 0.5,
+          vy: (Math.random() - 0.35) * 2.2,
+          size: kind === 'heart' ? 4.5 + Math.random() * 2.5 : 3 + Math.random() * 2.8,
+          color: kind === 'heart' ? '#ff5c8a' : palette[Math.floor(Math.random() * palette.length)],
+          life: 1,
+          decay: 0.03 + Math.random() * 0.02,
+          rot: (Math.random() - 0.5) * 0.6
+        });
+      }
+    }
+
+    // Estela continua de chispitas detrás de Rociito durante el Modo Turbo
+    function spawnTurboTrailSparkle(x, y) {
+      const color = TURBO_SPARK_COLORS[Math.floor(Math.random() * TURBO_SPARK_COLORS.length)];
+      particles.push({
+        kind: Math.random() < 0.7 ? 'sparkle' : 'heart',
+        x: x - 20 + (Math.random() - 0.5) * 6,
+        y: y + (Math.random() - 0.5) * 14,
+        vx: -getCurrentPipeSpeed() * 0.65 - Math.random() * 0.8,
+        vy: (Math.random() - 0.5) * 0.7,
+        size: 3.4 + Math.random() * 2.4,
+        color,
+        life: 0.85,
+        decay: 0.042 + Math.random() * 0.02,
+        rot: 0
+      });
+    }
+
+    function spawnScoreSparkles(x, y) {
+      for (let i = 0; i < 9; i++) {
+        const ang = (Math.PI * 2 * i) / 9 + Math.random() * 0.3;
+        const spd = 1.4 + Math.random() * 1.9;
+        particles.push({
+          kind: i % 2 === 0 ? 'sparkle' : 'heart',
+          x,
+          y,
+          vx: Math.cos(ang) * spd,
+          vy: Math.sin(ang) * spd - 0.4,
+          size: 4 + Math.random() * 2.4,
+          color: BEAD_COLORS[i % BEAD_COLORS.length],
+          life: 1,
+          decay: 0.028 + Math.random() * 0.015,
+          rot: 0
+        });
+      }
+    }
+
+    function spawnMilestoneBurst(x, y) {
+      for (let i = 0; i < 20; i++) {
+        const ang = (Math.PI * 2 * i) / 20;
+        const spd = 2.0 + Math.random() * 3.0;
+        particles.push({
+          kind: i % 3 === 0 ? 'heart' : i % 3 === 1 ? 'sparkle' : 'bead',
+          x,
+          y,
+          vx: Math.cos(ang) * spd,
+          vy: Math.sin(ang) * spd - 0.8,
+          size: 4.5 + Math.random() * 3,
+          color: BEAD_COLORS[i % BEAD_COLORS.length],
+          life: 1,
+          decay: 0.02 + Math.random() * 0.012,
+          rot: Math.random() * 0.8
+        });
+      }
+    }
+
+    function spawnHitBurst(x, y) {
+      for (let i = 0; i < 16; i++) {
+        const ang = Math.random() * Math.PI * 2;
+        const spd = 1.5 + Math.random() * 3.8;
+        particles.push({
+          kind: i % 2 === 0 ? 'bead' : 'sparkle',
+          x,
+          y,
+          vx: Math.cos(ang) * spd,
+          vy: Math.sin(ang) * spd - 1,
+          size: 3.5 + Math.random() * 3,
+          color: BEAD_COLORS[Math.floor(Math.random() * BEAD_COLORS.length)],
+          life: 1,
+          decay: 0.025 + Math.random() * 0.018,
+          rot: 0
+        });
+      }
+    }
+
+    function launchVictoryCelebration() {
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const pastelConfetti = ['#ff5c8a', '#ff8fab', '#7dd3fc', '#a3e635', '#fde047', '#d8b4fe', '#ffffff'];
+
+      celebrationItems = [];
+
+      // 115 piezas de confeti pastel y corazones
+      for (let i = 0; i < 115; i++) {
+        const ang = -Math.PI / 2 + (Math.random() - 0.5) * 2.2;
+        const spd = 4.5 + Math.random() * 10;
+        celebrationItems.push({
+          kind: i % 5 === 0 ? 'heart' : 'confetti',
+          x: vw * 0.5 + (Math.random() - 0.5) * Math.min(vw * 0.55, 220),
+          y: vh * 0.42 + (Math.random() - 0.5) * 80,
+          vx: Math.cos(ang) * spd,
+          vy: Math.sin(ang) * spd - 2.2,
+          w: 8 + Math.random() * 7,
+          h: 5 + Math.random() * 5,
+          size: 11 + Math.random() * 7,
+          color: pastelConfetti[Math.floor(Math.random() * pastelConfetti.length)],
+          rot: Math.random() * Math.PI * 2,
+          vRot: (Math.random() - 0.5) * 0.22,
+          wobble: Math.random() * Math.PI * 2,
+          gravity: 0.12 + Math.random() * 0.07
+        });
+      }
+
+      // 18 aguacates y caquitas kawaii flotando alegremente
+      for (let i = 0; i < 18; i++) {
+        celebrationItems.push({
+          kind: i % 2 === 0 ? 'avocado' : 'poop',
+          x: Math.random() * vw,
+          y: vh + 30 + Math.random() * vh * 0.7,
+          vx: (Math.random() - 0.5) * 0.8,
+          vy: -(1.25 + Math.random() * 1.4),
+          size: 20 + Math.random() * 11,
+          rot: (Math.random() - 0.5) * 0.4,
+          vRot: (Math.random() - 0.5) * 0.025,
+          wobble: Math.random() * Math.PI * 2,
+          gravity: 0
+        });
+      }
+    }
+
+    /* =========================================================================
+       GENERACIÓN DE TUBOS Y COLISIÓN CÍRCULO vs RECTÁNGULO
+       ========================================================================= */
+    function spawnPipe() {
+      // Guardamos el hueco en p.gap al crearse para que nunca se encoja a mitad de vuelo
+      const gap = getCurrentPipeGap();
+      const minTop = 76;
+      const maxTop = LOGICAL_H - GROUND_H - gap - 76;
+      const maxStep = 148;
+
+      const low = Math.max(minTop, lastPipeTop - maxStep);
+      const high = Math.min(maxTop, lastPipeTop + maxStep);
+      let top = Math.floor(Math.random() * (high - low + 1)) + low;
+
+      // Tubos oscilantes suaves a partir del punto 75 en Modo Turbo
+      let moveAmp = 0;
+      let moveFreq = 0;
+      let movePhase = 0;
+      let baseTop = top;
+
+      if (turboMode && score >= CONFIG.TURBO_TUBOS_MOVILES_DESDE) {
+        const mobileExtra = score - CONFIG.TURBO_TUBOS_MOVILES_DESDE;
+        const mobileChance = Math.min(0.88, 0.42 + mobileExtra * 0.038);
+
+        if (!firstMobilePipeSpawned || Math.random() < mobileChance) {
+          firstMobilePipeSpawned = true;
+          const desiredAmp = Math.min(28, 12 + mobileExtra * 0.9);
+          const maxSafeAmp = Math.max(0, (maxTop - minTop) * 0.5);
+          moveAmp = Math.min(desiredAmp, maxSafeAmp);
+
+          baseTop = Math.max(minTop + moveAmp, Math.min(maxTop - moveAmp, top));
+          moveFreq = Math.min(0.056, 0.026 + mobileExtra * 0.0014);
+          movePhase = Math.random() * Math.PI * 2;
+          top = baseTop + Math.sin(movePhase) * moveAmp;
+        }
+      }
+
+      lastPipeTop = baseTop;
+
+      pipes.push({
+        x: LOGICAL_W + 18,
+        w: CONFIG.ANCHO_TUBOS,
+        top,
+        baseTop,
+        gap,
+        moveAmp,
+        moveFreq,
+        movePhase,
+        passed: false
+      });
+    }
+
+    function circleRectCollide(cx, cy, r, rx, ry, rw, rh) {
+      const closestX = Math.max(rx, Math.min(cx, rx + rw));
+      const closestY = Math.max(ry, Math.min(cy, ry + rh));
+      const dx = cx - closestX;
+      const dy = cy - closestY;
+      return dx * dx + dy * dy < r * r;
+    }
+
+    /* =========================================================================
+       ACTUALIZACIÓN FRAME-RATE INDEPENDENT (dt NORMALIZADO A 60FPS, MAX 0.05s)
+       ========================================================================= */
+    function update(dt) {
+      elapsed60 += dt;
+
+      const currentSpeed = getCurrentPipeSpeed();
+      const speedMult = getTurboSpeedMultiplier();
+      const turboParallaxBoost = turboMode ? 1 + (speedMult - 1) * 0.85 : 1;
+
+      // Nubes flotando suavemente
+      for (let i = 0; i < clouds.length; i++) {
+        const c = clouds[i];
+        c.x -= c.speed * turboParallaxBoost * dt;
+        if (c.x < -75) {
+          c.x = LOGICAL_W + 75;
+          c.y = 52 + Math.random() * 190;
+        }
+      }
+
+      // Iconos kawaii en parallax suave
+      const worldMoving = gameState === 'START' || gameState === 'READY' || gameState === 'PLAYING';
+      const bgSpeedMult = gameState === 'PLAYING' ? turboParallaxBoost : 0.45;
+      for (let i = 0; i < bgIcons.length; i++) {
+        const ic = bgIcons[i];
+        ic.x -= ic.speed * bgSpeedMult * dt;
+        if (ic.x < -36) {
+          ic.x = LOGICAL_W + 36;
+          ic.y = 64 + Math.random() * (LOGICAL_H - GROUND_H - 135);
+        }
+      }
+
+      // Líneas pastel de viento / velocidad en Modo Turbo
+      if (turboMode && worldMoving) {
+        const wMult = gameState === 'PLAYING' ? 1 : 0.35;
+        for (let i = 0; i < windLines.length; i++) {
+          const wl = windLines[i];
+          wl.x -= currentSpeed * wl.speedFactor * wMult * dt;
+          if (wl.x + wl.len < -12) {
+            wl.x = LOGICAL_W + 16 + Math.random() * 60;
+            wl.y = 42 + Math.random() * (LOGICAL_H - GROUND_H - 76);
+            wl.len = 20 + Math.random() * 34;
+          }
+        }
+      }
+
+      // Suelo desplazándose a la velocidad exacta de los tubos
+      if (worldMoving) {
+        const gMult = gameState === 'PLAYING' ? 1 : 0.45;
+        groundScroll = (groundScroll + currentSpeed * gMult * dt) % 40;
+      }
+
+      if (screenShake > 0) {
+        screenShake = Math.max(0, screenShake - 0.65 * dt);
+      }
+
+      // Recuperación elástica del squash-and-stretch del pajarito
+      const spring = Math.min(1, 0.18 * dt);
+      bird.scaleX += (1 - bird.scaleX) * spring;
+      bird.scaleY += (1 - bird.scaleY) * spring;
+      bird.flapWave = Math.max(0, bird.flapWave - 0.07 * dt);
+
+      // Flotación suave en START y READY antes del primer toque
+      if (gameState === 'START' || gameState === 'READY') {
+        bird.y = LOGICAL_H * 0.44 + Math.sin(elapsed60 * 0.085) * 9;
+        bird.rotation = Math.sin(elapsed60 * 0.085) * 0.06;
+      }
+
+      // Físicas durante el vuelo activo
+      if (gameState === 'PLAYING') {
+        bird.vy = Math.min(CONFIG.VELOCIDAD_MAX_CAIDA, bird.vy + CONFIG.GRAVEDAD * dt);
+        bird.y += bird.vy * dt;
+
+        // Estela brillante extra detrás de Rociito en Modo Turbo
+        if (turboMode) {
+          turboTrailAccum += dt;
+          if (turboTrailAccum >= 3.2) {
+            turboTrailAccum = 0;
+            spawnTurboTrailSparkle(bird.x, bird.y);
+          }
+        }
+
+        // Inclinación suave
+        const targetRot = bird.vy < 0
+          ? -0.34
+          : Math.min(0.75, bird.vy * 0.088);
+        bird.rotation += (targetRot - bird.rotation) * Math.min(1, 0.2 * dt);
+
+        // Generación de tubos a la distancia correspondiente al modo actual
+        distanceSincePipe += currentSpeed * dt;
+        if (distanceSincePipe >= getCurrentPipeDistance()) {
+          distanceSincePipe = 0;
+          spawnPipe();
+        }
+
+        // Movimiento, colisiones y puntuación
+        for (let i = pipes.length - 1; i >= 0; i--) {
+          const p = pipes[i];
+          p.x -= currentSpeed * dt;
+
+          // Oscilación vertical suave para tubos móviles en Turbo (75+)
+          if (p.moveAmp > 0) {
+            p.movePhase += p.moveFreq * dt;
+            p.top = p.baseTop + Math.sin(p.movePhase) * p.moveAmp;
+          }
+
+          const bottomY = p.top + p.gap;
+          const bottomH = LOGICAL_H - GROUND_H - bottomY;
+
+          const hitTop = circleRectCollide(bird.x, bird.y, CONFIG.HITBOX_RADIO, p.x, -40, p.w, p.top + 40);
+          const hitBottom = circleRectCollide(bird.x, bird.y, CONFIG.HITBOX_RADIO, p.x, bottomY, p.w, bottomH);
+
+          if (hitTop || hitBottom) {
+            triggerGameOver();
+            break;
+          }
+
+          // Punto al superar el centro del tubo
+          if (!p.passed && p.x + p.w * 0.5 < bird.x) {
+            p.passed = true;
+            score++;
+
+            if (score > bestScore) {
+              bestScore = score;
+              try {
+                localStorage.setItem(STORAGE_BEST_KEY, String(bestScore));
+              } catch (_) {}
+            }
+            updateHUD();
+
+            if (!turboMode && score >= CONFIG.META_PUNTOS) {
+              triggerWin();
+              break;
+            } else {
+              const wasMilestone = checkMilestone(score);
+              if (!wasMilestone) {
+                SoundFX.playPoint();
+                spawnScoreSparkles(bird.x + 14, bird.y - 16);
+              }
+            }
+          }
+
+          if (p.x + p.w + 20 < 0) {
+            pipes.splice(i, 1);
+          }
+        }
+
+        // Techo suave y suelo
+        if (bird.y - CONFIG.HITBOX_RADIO < 6) {
+          bird.y = 6 + CONFIG.HITBOX_RADIO;
+          bird.vy = Math.max(0, bird.vy);
+        }
+        if (bird.y + CONFIG.HITBOX_RADIO >= LOGICAL_H - GROUND_H) {
+          bird.y = LOGICAL_H - GROUND_H - CONFIG.HITBOX_RADIO;
+          triggerGameOver();
+        }
+      }
+
+      // Partículas dentro del lienzo del juego
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const pt = particles[i];
+        pt.x += pt.vx * dt;
+        pt.y += pt.vy * dt;
+        pt.vy += 0.05 * dt;
+        pt.life -= pt.decay * dt;
+        if (pt.life <= 0) particles.splice(i, 1);
+      }
+
+      // Mensajes flotantes de hito
+      for (let i = cheerPopups.length - 1; i >= 0; i--) {
+        const ch = cheerPopups[i];
+        ch.y += ch.vy * dt;
+        ch.scale += (1 - ch.scale) * Math.min(1, 0.22 * dt);
+        ch.life -= 0.014 * dt;
+        if (ch.life <= 0) cheerPopups.splice(i, 1);
+      }
+
+      // Animación continua de celebración en la pantalla de victoria
+      if (celebrationItems.length > 0) {
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        for (let i = celebrationItems.length - 1; i >= 0; i--) {
+          const item = celebrationItems[i];
+          if (item.kind === 'avocado' || item.kind === 'poop') {
+            item.y += item.vy * dt;
+            item.x += (item.vx + Math.sin(elapsed60 * 0.05 + item.wobble) * 0.65) * dt;
+            item.rot += item.vRot * dt;
+            if (item.y < -45) {
+              if (gameState === 'WIN') {
+                item.y = vh + 40;
+                item.x = Math.random() * vw;
+              } else {
+                celebrationItems.splice(i, 1);
+              }
+            }
+          } else {
+            item.x += (item.vx + Math.sin(elapsed60 * 0.07 + item.wobble) * 0.7) * dt;
+            item.y += item.vy * dt;
+            item.vy += item.gravity * dt;
+            item.vx *= Math.pow(0.99, dt);
+            item.rot += item.vRot * dt;
+            if (item.y > vh + 26) {
+              if (gameState === 'WIN') {
+                item.y = -18 - Math.random() * 40;
+                item.x = Math.random() * vw;
+                item.vy = 1.6 + Math.random() * 2.2;
+                item.vx = (Math.random() - 0.5) * 1.4;
+              } else {
+                celebrationItems.splice(i, 1);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    /* =========================================================================
+       ILUSTRACIONES VECTORIALES KAWAII EN CANVAS (AGUACATES, CAQUITAS, LAZOS...)
+       ========================================================================= */
+    function roundRectPath(c, x, y, w, h, r) {
+      c.beginPath();
+      c.moveTo(x + r, y);
+      c.lineTo(x + w - r, y);
+      c.quadraticCurveTo(x + w, y, x + w, y + r);
+      c.lineTo(x + w, y + h - r);
+      c.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      c.lineTo(x + r, y + h);
+      c.quadraticCurveTo(x, y + h, x, y + h - r);
+      c.lineTo(x, y + r);
+      c.quadraticCurveTo(x, y, x + r, y);
+      c.closePath();
+    }
+
+    function drawHeartShape(c, x, y, size, color, strokeColor) {
+      c.save();
+      c.translate(x, y);
+      c.fillStyle = color;
+      c.beginPath();
+      c.moveTo(0, size * 0.35);
+      c.bezierCurveTo(-size, -size * 0.35, -size * 0.8, -size * 1.15, 0, -size * 0.42);
+      c.bezierCurveTo(size * 0.8, -size * 1.15, size, -size * 0.35, 0, size * 0.35);
+      c.closePath();
+      c.fill();
+      if (strokeColor) {
+        c.strokeStyle = strokeColor;
+        c.lineWidth = Math.max(1, size * 0.16);
+        c.stroke();
+      }
+      c.restore();
+    }
+
+    function drawSparkleShape(c, x, y, size, color) {
+      c.save();
+      c.translate(x, y);
+      c.fillStyle = color;
+      c.beginPath();
+      c.moveTo(0, -size);
+      c.quadraticCurveTo(0, 0, size, 0);
+      c.quadraticCurveTo(0, 0, 0, size);
+      c.quadraticCurveTo(0, 0, -size, 0);
+      c.quadraticCurveTo(0, 0, 0, -size);
+      c.closePath();
+      c.fill();
+      c.restore();
+    }
+
+    // Aguacate kawaii sonriente con huesito
+    function drawKawaiiAvocado(c, x, y, size, rotation, alpha) {
+      const s = size / 20;
+      c.save();
+      c.globalAlpha = alpha;
+      c.translate(x, y);
+      c.rotate(rotation);
+
+      c.fillStyle = '#4d7c0f';
+      c.strokeStyle = '#231f20';
+      c.lineWidth = 1.8 * s;
+      c.beginPath();
+      c.moveTo(0, -17 * s);
+      c.bezierCurveTo(9 * s, -17 * s, 14 * s, -3 * s, 14 * s, 6 * s);
+      c.bezierCurveTo(14 * s, 15 * s, 7 * s, 18 * s, 0, 18 * s);
+      c.bezierCurveTo(-7 * s, 18 * s, -14 * s, 15 * s, -14 * s, 6 * s);
+      c.bezierCurveTo(-14 * s, -3 * s, -9 * s, -17 * s, 0, -17 * s);
+      c.closePath();
+      c.fill();
+      c.stroke();
+
+      c.fillStyle = '#d9f99d';
+      c.beginPath();
+      c.moveTo(0, -14 * s);
+      c.bezierCurveTo(7 * s, -14 * s, 11 * s, -2 * s, 11 * s, 5.5 * s);
+      c.bezierCurveTo(11 * s, 12.5 * s, 5.5 * s, 15 * s, 0, 15 * s);
+      c.bezierCurveTo(-5.5 * s, 15 * s, -11 * s, 12.5 * s, -11 * s, 5.5 * s);
+      c.bezierCurveTo(-11 * s, -2 * s, -7 * s, -14 * s, 0, -14 * s);
+      c.closePath();
+      c.fill();
+
+      c.fillStyle = '#92400e';
+      c.beginPath();
+      c.ellipse(0, 6.5 * s, 5.8 * s, 6.8 * s, 0, 0, Math.PI * 2);
+      c.fill();
+      c.fillStyle = 'rgba(255, 255, 255, 0.35)';
+      c.beginPath();
+      c.ellipse(-2 * s, 4 * s, 1.8 * s, 2.6 * s, -0.3, 0, Math.PI * 2);
+      c.fill();
+
+      c.fillStyle = '#231f20';
+      c.beginPath();
+      c.arc(-4.2 * s, -4.2 * s, 1.5 * s, 0, Math.PI * 2);
+      c.arc(4.2 * s, -4.2 * s, 1.5 * s, 0, Math.PI * 2);
+      c.fill();
+
+      c.fillStyle = 'rgba(255, 143, 171, 0.85)';
+      c.beginPath();
+      c.arc(-7 * s, -2.2 * s, 1.8 * s, 0, Math.PI * 2);
+      c.arc(7 * s, -2.2 * s, 1.8 * s, 0, Math.PI * 2);
+      c.fill();
+
+      c.strokeStyle = '#231f20';
+      c.lineWidth = 1.4 * s;
+      c.lineCap = 'round';
+      c.beginPath();
+      c.arc(0, -3.5 * s, 2.3 * s, 0.15 * Math.PI, 0.85 * Math.PI);
+      c.stroke();
+
+      c.restore();
+    }
+
+    // Caquita kawaii feliz con coloretes rosas
+    function drawKawaiiPoop(c, x, y, size, rotation, alpha) {
+      const s = size / 20;
+      c.save();
+      c.globalAlpha = alpha;
+      c.translate(x, y);
+      c.rotate(rotation);
+
+      c.fillStyle = '#8b5a2b';
+      c.strokeStyle = '#3e2723';
+      c.lineWidth = 1.8 * s;
+
+      c.beginPath();
+      c.ellipse(0, 9.5 * s, 15 * s, 6.8 * s, 0, 0, Math.PI * 2);
+      c.fill();
+      c.stroke();
+
+      c.beginPath();
+      c.ellipse(0, 1.5 * s, 11.5 * s, 6.2 * s, 0, 0, Math.PI * 2);
+      c.fill();
+      c.stroke();
+
+      c.beginPath();
+      c.moveTo(-7.5 * s, -3 * s);
+      c.quadraticCurveTo(-8 * s, -12 * s, 1 * s, -15 * s);
+      c.quadraticCurveTo(0 * s, -10 * s, 7.5 * s, -4 * s);
+      c.quadraticCurveTo(0, -1 * s, -7.5 * s, -3 * s);
+      c.closePath();
+      c.fill();
+      c.stroke();
+
+      c.strokeStyle = '#231f20';
+      c.lineWidth = 1.7 * s;
+      c.lineCap = 'round';
+      c.beginPath();
+      c.arc(-4.6 * s, 4.5 * s, 2.2 * s, Math.PI * 1.1, Math.PI * 1.9);
+      c.stroke();
+      c.beginPath();
+      c.arc(4.6 * s, 4.5 * s, 2.2 * s, Math.PI * 1.1, Math.PI * 1.9);
+      c.stroke();
+
+      c.fillStyle = '#ff8fab';
+      c.beginPath();
+      c.arc(-8.6 * s, 6.8 * s, 2.3 * s, 0, Math.PI * 2);
+      c.arc(8.6 * s, 6.8 * s, 2.3 * s, 0, Math.PI * 2);
+      c.fill();
+
+      c.fillStyle = '#ff5c8a';
+      c.beginPath();
+      c.arc(0, 6.5 * s, 3.2 * s, 0, Math.PI);
+      c.closePath();
+      c.fill();
+      c.strokeStyle = '#231f20';
+      c.lineWidth = 1.2 * s;
+      c.stroke();
+
+      c.restore();
+    }
+
+    // Lazito rosa pastel (con nudo central dorado #fde047 en tubos móviles del Modo Turbo)
+    function drawCuteBow(c, x, y, scale, isTurboMobile) {
+      c.save();
+      c.translate(x, y);
+      c.scale(scale, scale);
+
+      c.fillStyle = '#ff5c8a';
+      c.strokeStyle = '#231f20';
+      c.lineWidth = 2;
+
+      c.beginPath();
+      c.moveTo(0, 0);
+      c.quadraticCurveTo(-11, -9, -12, 0);
+      c.quadraticCurveTo(-11, 9, 0, 0);
+      c.fill();
+      c.stroke();
+
+      c.beginPath();
+      c.moveTo(0, 0);
+      c.quadraticCurveTo(11, -9, 12, 0);
+      c.quadraticCurveTo(11, 9, 0, 0);
+      c.fill();
+      c.stroke();
+
+      c.fillStyle = isTurboMobile ? '#fde047' : '#ffb3c6';
+      c.beginPath();
+      c.arc(0, 0, 3.6, 0, Math.PI * 2);
+      c.fill();
+      c.stroke();
+
+      c.restore();
+    }
+
+    // Pajarito placeholder inspirado en Rociito (si prima.jpg no está presente)
+    function drawRociitoPlaceholderBird(c, size) {
+      const s = size / 66;
+      c.save();
+      c.scale(s, s);
+
+      // Cuerpo oscuro estilo camiseta Betty Boop
+      c.fillStyle = '#242226';
+      c.strokeStyle = '#231f20';
+      c.lineWidth = 2.8;
+      c.beginPath();
+      c.ellipse(-2, 7, 25, 16, -0.05, 0, Math.PI * 2);
+      c.fill();
+      c.stroke();
+
+      // Cuello en pico rosa pastel
+      c.strokeStyle = '#ffb3c6';
+      c.lineWidth = 2.6;
+      c.beginPath();
+      c.moveTo(2, 6);
+      c.lineTo(12, 13);
+      c.lineTo(20, 6);
+      c.stroke();
+
+      // Alita negra con rayita rosa
+      c.fillStyle = '#323036';
+      c.strokeStyle = '#231f20';
+      c.lineWidth = 2.2;
+      c.beginPath();
+      c.ellipse(-10, 11, 10, 6.5, -0.25, 0, Math.PI * 2);
+      c.fill();
+      c.stroke();
+      c.strokeStyle = '#ff8fab';
+      c.lineWidth = 2;
+      c.beginPath();
+      c.moveTo(-4, 7);
+      c.lineTo(-2, 15);
+      c.stroke();
+
+      // Carita redondita mirando a la derecha
+      c.fillStyle = '#ffd5c2';
+      c.strokeStyle = '#231f20';
+      c.lineWidth = 2.6;
+      c.beginPath();
+      c.arc(6, -6, 17, 0, Math.PI * 2);
+      c.fill();
+      c.stroke();
+
+      // Colorete rosa suave
+      c.fillStyle = 'rgba(255, 143, 171, 0.55)';
+      c.beginPath();
+      c.ellipse(10, 0, 5.5, 3.6, 0, 0, Math.PI * 2);
+      c.fill();
+
+      // Melena negra ondulada
+      c.fillStyle = '#26272c';
+      c.strokeStyle = '#231f20';
+      c.lineWidth = 2.5;
+      c.beginPath();
+      c.moveTo(15, -20);
+      c.quadraticCurveTo(0, -27, -14, -17);
+      c.quadraticCurveTo(-28, -8, -24, 5);
+      c.quadraticCurveTo(-18, 12, -8, 10);
+      c.quadraticCurveTo(-2, 6, -3, -6);
+      c.quadraticCurveTo(3, -16, 15, -20);
+      c.closePath();
+      c.fill();
+      c.stroke();
+
+      // Brillo suave en el pelo
+      c.strokeStyle = '#484a54';
+      c.lineWidth = 2;
+      c.lineCap = 'round';
+      c.beginPath();
+      c.moveTo(-12, -13);
+      c.quadraticCurveTo(-18, -3, -15, 4);
+      c.stroke();
+
+      // Ojito expresivo con brillo
+      c.fillStyle = '#231f20';
+      c.beginPath();
+      c.arc(13, -8, 3.4, 0, Math.PI * 2);
+      c.fill();
+      c.fillStyle = '#ffffff';
+      c.beginPath();
+      c.arc(14.1, -9.2, 1.3, 0, Math.PI * 2);
+      c.fill();
+
+      // Gafas estilosas con montura clarita
+      c.fillStyle = 'rgba(186, 230, 253, 0.35)';
+      c.strokeStyle = '#ffffff';
+      c.lineWidth = 2.5;
+      roundRectPath(c, 6.5, -14.5, 13.5, 11.5, 4);
+      c.fill();
+      c.stroke();
+      c.strokeStyle = '#231f20';
+      c.lineWidth = 1.2;
+      roundRectPath(c, 6.5, -14.5, 13.5, 11.5, 4);
+      c.stroke();
+
+      // Patilla de la gafa
+      c.strokeStyle = '#ffffff';
+      c.lineWidth = 2.2;
+      c.beginPath();
+      c.moveTo(6.5, -10);
+      c.lineTo(-1, -11);
+      c.stroke();
+
+      // Labios dando un besito hacia la derecha
+      c.fillStyle = '#ff6b8b';
+      c.strokeStyle = '#231f20';
+      c.lineWidth = 1.7;
+      c.beginPath();
+      c.ellipse(24, -1.5, 4.4, 3.3, -0.25, 0, Math.PI * 2);
+      c.fill();
+      c.stroke();
+      c.beginPath();
+      c.ellipse(23.5, 2.2, 4.2, 3.0, 0.2, 0, Math.PI * 2);
+      c.fill();
+      c.stroke();
+
+      // Lazito rosa pastel en el pelo
+      drawCuteBow(c, -6, -19, 0.72, false);
+
+      c.restore();
+    }
+
+    /* =========================================================================
+       DIBUJO PRINCIPAL DEL JUEGO (CIELO, TUBOS ROSAS, SUELO AGUACATE Y ROCIITO)
+       ========================================================================= */
+    function drawSkyAndParallax() {
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, LOGICAL_H - GROUND_H);
+      skyGrad.addColorStop(0, '#6fd0ff');
+      skyGrad.addColorStop(0.55, '#a3e4ff');
+      skyGrad.addColorStop(1, '#dcf6ff');
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(0, 0, LOGICAL_W, LOGICAL_H);
+
+      for (let i = 0; i < clouds.length; i++) {
+        drawCloud(clouds[i].x, clouds[i].y, clouds[i].scale);
+      }
+
+      for (let i = 0; i < bgIcons.length; i++) {
+        const ic = bgIcons[i];
+        const bobY = ic.y + Math.sin(elapsed60 * 0.04 + ic.phase) * ic.bobAmp;
+        const rot = Math.sin(elapsed60 * 0.035 + ic.phase) * ic.rotAmp;
+
+        if (ic.type === 'avocado') {
+          drawKawaiiAvocado(ctx, ic.x, bobY, ic.size, rot, 0.48);
+        } else if (ic.type === 'poop') {
+          drawKawaiiPoop(ctx, ic.x, bobY, ic.size, rot, 0.45);
+        } else if (ic.type === 'heart') {
+          ctx.save();
+          ctx.globalAlpha = 0.55;
+          drawHeartShape(ctx, ic.x, bobY, ic.size, '#ff8fab');
+          ctx.restore();
+        } else {
+          ctx.save();
+          ctx.globalAlpha = 0.75;
+          drawSparkleShape(ctx, ic.x, bobY, ic.size * 0.9, '#ffffff');
+          ctx.restore();
+        }
+      }
+
+      // Líneas pastel sutiles de viento y chispitas de velocidad en Modo Turbo
+      if (turboMode) {
+        const speedMult = getTurboSpeedMultiplier();
+        const windAlpha = Math.min(0.46, 0.16 + (speedMult - 1) * 0.34);
+
+        ctx.save();
+        ctx.lineCap = 'round';
+        for (let i = 0; i < windLines.length; i++) {
+          const wl = windLines[i];
+          ctx.globalAlpha = windAlpha;
+          ctx.strokeStyle = wl.sparkle ? '#fff9db' : wl.color;
+          ctx.lineWidth = wl.sparkle ? 2.2 : 1.6;
+          ctx.beginPath();
+          ctx.moveTo(wl.x, wl.y);
+          ctx.lineTo(wl.x + wl.len * Math.min(1.6, speedMult), wl.y);
+          ctx.stroke();
+
+          if (wl.sparkle && speedMult >= 1.12) {
+            ctx.globalAlpha = Math.min(0.72, windAlpha + 0.15);
+            drawSparkleShape(ctx, wl.x - 4, wl.y, 4.2, '#fde047');
+          }
+        }
+        ctx.restore();
+      }
+    }
+
+    function drawCloud(x, y, scale) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(scale, scale);
+
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+      ctx.beginPath();
+      ctx.arc(-22, 6, 17, 0, Math.PI * 2);
+      ctx.arc(0, -4, 24, 0, Math.PI * 2);
+      ctx.arc(24, 6, 18, 0, Math.PI * 2);
+      ctx.arc(4, 12, 19, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = 'rgba(186, 230, 253, 0.45)';
+      ctx.beginPath();
+      ctx.ellipse(2, 20, 32, 6, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    function drawPipe(p) {
+      const bottomY = p.top + p.gap;
+      const bottomH = LOGICAL_H - GROUND_H - bottomY;
+      const isMobile = p.moveAmp > 0;
+
+      drawKawaiiPillar(p.x, -4, p.w, p.top + 4, true, isMobile);
+      drawKawaiiPillar(p.x, bottomY, p.w, bottomH + 4, false, isMobile);
+    }
+
+    function drawKawaiiPillar(x, y, w, h, isTop, isMobile) {
+      if (h <= 0) return;
+
+      ctx.save();
+
+      // Cuerpo glossy rosa pastel
+      const bodyGrad = ctx.createLinearGradient(x, 0, x + w, 0);
+      bodyGrad.addColorStop(0, '#ff8fab');
+      bodyGrad.addColorStop(0.24, '#ffc2d1');
+      bodyGrad.addColorStop(0.42, '#ffb3c6');
+      bodyGrad.addColorStop(0.8, '#ff8fab');
+      bodyGrad.addColorStop(1, '#fb6f92');
+
+      ctx.fillStyle = bodyGrad;
+      ctx.fillRect(x, y, w, h);
+
+      // Reflejo vertical crema
+      ctx.fillStyle = 'rgba(255, 253, 249, 0.58)';
+      ctx.fillRect(x + 8, y, 7, h);
+      ctx.fillStyle = 'rgba(255, 253, 249, 0.3)';
+      ctx.fillRect(x + 18, y, 3, h);
+
+      // Contorno cartoon oscuro
+      ctx.strokeStyle = '#231f20';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(x, y, w, h);
+
+      // Remate / tapa del tubo
+      const capH = 28;
+      const capX = x - 6;
+      const capW = w + 12;
+      const capY = isTop ? y + h - capH : y;
+
+      const capGrad = ctx.createLinearGradient(capX, 0, capX + capW, 0);
+      capGrad.addColorStop(0, '#ff7597');
+      capGrad.addColorStop(0.28, '#ffb3c6');
+      capGrad.addColorStop(0.75, '#ff8fab');
+      capGrad.addColorStop(1, '#f45b84');
+
+      roundRectPath(ctx, capX, capY, capW, capH, 9);
+      ctx.fillStyle = capGrad;
+      ctx.fill();
+
+      // Banda negra y rosa estilo camiseta Betty Boop en el borde interior de la tapa
+      ctx.save();
+      roundRectPath(ctx, capX, capY, capW, capH, 9);
+      ctx.clip();
+
+      const trimY = isTop ? capY + 2 : capY + capH - 8;
+      ctx.fillStyle = '#231f20';
+      ctx.fillRect(capX, trimY, capW, 6);
+      ctx.fillStyle = '#ffe5ec';
+      ctx.fillRect(capX, trimY + 2, capW, 2);
+
+      ctx.fillStyle = 'rgba(255, 253, 249, 0.52)';
+      ctx.fillRect(capX + 9, capY + 3, 7, capH - 6);
+      ctx.restore();
+
+      roundRectPath(ctx, capX, capY, capW, capH, 9);
+      ctx.strokeStyle = '#231f20';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      // Lazito rosa pastel centrado en la tapa (nudo dorado en tubos móviles Turbo)
+      const bowY = isTop ? capY + capH - 11 : capY + 11;
+      drawCuteBow(ctx, capX + capW / 2, bowY, 0.78, isMobile);
+
+      ctx.restore();
+    }
+
+    // Suelo verde aguacate con cenefa diagonal rosa pastel y crema
+    function drawGround() {
+      const y = LOGICAL_H - GROUND_H;
+
+      const grassGrad = ctx.createLinearGradient(0, y + 16, 0, LOGICAL_H);
+      grassGrad.addColorStop(0, '#a3e635');
+      grassGrad.addColorStop(0.45, '#84cc16');
+      grassGrad.addColorStop(1, '#65a30d');
+      ctx.fillStyle = grassGrad;
+      ctx.fillRect(0, y + 14, LOGICAL_W, GROUND_H - 14);
+
+      ctx.fillStyle = 'rgba(217, 249, 157, 0.5)';
+      for (let gx = -groundScroll; gx < LOGICAL_W + 44; gx += 40) {
+        ctx.beginPath();
+        ctx.ellipse(gx + 18, y + 32, 16, 6, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(0, y, LOGICAL_W, 15);
+      ctx.clip();
+
+      ctx.fillStyle = '#fffdf9';
+      ctx.fillRect(0, y, LOGICAL_W, 15);
+
+      ctx.fillStyle = '#ff8fab';
+      for (let sx = -groundScroll - 40; sx < LOGICAL_W + 40; sx += 20) {
+        ctx.beginPath();
+        ctx.moveTo(sx, y + 15);
+        ctx.lineTo(sx + 9, y);
+        ctx.lineTo(sx + 19, y);
+        ctx.lineTo(sx + 10, y + 15);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.restore();
+
+      ctx.fillStyle = '#231f20';
+      ctx.fillRect(0, y, LOGICAL_W, 3);
+      ctx.fillRect(0, y + 14, LOGICAL_W, 3);
+    }
+
+    function drawBirdOnContext(targetCtx, x, y, targetSize, rotation, scaleX, scaleY) {
+      targetCtx.save();
+      targetCtx.translate(x, y);
+      targetCtx.rotate(rotation);
+      targetCtx.scale(scaleX, scaleY);
+
+      if (cachedBirdSprite) {
+        const sw = cachedBirdSprite.width;
+        const sh = cachedBirdSprite.height;
+        const fitScale = targetSize / Math.max(sw, sh);
+        const dw = sw * fitScale;
+        const dh = sh * fitScale;
+        targetCtx.drawImage(cachedBirdSprite, -dw / 2, -dh / 2, dw, dh);
+      } else {
+        drawRociitoPlaceholderBird(targetCtx, targetSize);
+      }
+
+      targetCtx.restore();
+    }
+
+    function renderAvatarPreview() {
+      previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+      drawBirdOnContext(
+        previewCtx,
+        previewCanvas.width / 2,
+        previewCanvas.height / 2 + 2,
+        150,
+        -0.04,
+        1,
+        1
+      );
+    }
+
+    function drawParticles() {
+      for (let i = 0; i < particles.length; i++) {
+        const pt = particles[i];
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, pt.life);
+
+        if (pt.kind === 'heart') {
+          drawHeartShape(ctx, pt.x, pt.y, pt.size, pt.color, '#231f20');
+        } else if (pt.kind === 'sparkle') {
+          drawSparkleShape(ctx, pt.x, pt.y, pt.size * 1.15, pt.color);
+        } else {
+          ctx.fillStyle = pt.color;
+          ctx.strokeStyle = '#231f20';
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          ctx.arc(pt.x, pt.y, pt.size * 0.72, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+    }
+
+    function drawCheerPopups() {
+      for (let i = 0; i < cheerPopups.length; i++) {
+        const ch = cheerPopups[i];
+        ctx.save();
+        ctx.globalAlpha = Math.min(1, ch.life * 1.4);
+        ctx.translate(ch.x, ch.y);
+        ctx.scale(ch.scale, ch.scale);
+
+        ctx.font = '700 22px Fredoka, Nunito, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        ctx.lineJoin = 'round';
+        ctx.lineWidth = 7;
+        ctx.strokeStyle = '#ffffff';
+        ctx.strokeText(ch.text, 0, 0);
+
+        ctx.lineWidth = 3.5;
+        ctx.strokeStyle = '#231f20';
+        ctx.strokeText(ch.text, 0, 0);
+
+        ctx.fillStyle = '#ff5c8a';
+        ctx.fillText(ch.text, 0, 0);
+        ctx.restore();
+      }
+    }
+
+    function drawCelebrationOverlay() {
+      celebCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+      if (celebrationItems.length === 0) return;
+
+      for (let i = 0; i < celebrationItems.length; i++) {
+        const item = celebrationItems[i];
+        if (item.kind === 'avocado') {
+          drawKawaiiAvocado(celebCtx, item.x, item.y, item.size, item.rot, 0.92);
+        } else if (item.kind === 'poop') {
+          drawKawaiiPoop(celebCtx, item.x, item.y, item.size, item.rot, 0.92);
+        } else if (item.kind === 'heart') {
+          celebCtx.save();
+          celebCtx.translate(item.x, item.y);
+          celebCtx.rotate(item.rot);
+          drawHeartShape(celebCtx, 0, 0, item.size * 0.65, item.color, '#231f20');
+          celebCtx.restore();
+        } else {
+          celebCtx.save();
+          celebCtx.translate(item.x, item.y);
+          celebCtx.rotate(item.rot);
+          celebCtx.fillStyle = item.color;
+          celebCtx.fillRect(-item.w / 2, -item.h / 2, item.w, item.h);
+          celebCtx.restore();
+        }
+      }
+    }
+
+    function render() {
+      ctx.save();
+      if (screenShake > 0) {
+        ctx.translate(
+          (Math.random() - 0.5) * screenShake,
+          (Math.random() - 0.5) * screenShake
+        );
+      }
+
+      drawSkyAndParallax();
+      pipes.forEach(drawPipe);
+      drawGround();
+      drawParticles();
+
+      drawBirdOnContext(
+        ctx,
+        bird.x,
+        bird.y,
+        BIRD_VISUAL_SIZE,
+        bird.rotation,
+        bird.scaleX,
+        bird.scaleY
+      );
+
+      drawCheerPopups();
+      ctx.restore();
+
+      drawCelebrationOverlay();
+    }
+
+    /* =========================================================================
+       BUCLE PRINCIPAL (requestAnimationFrame CON DELTA-TIME CLAMP <= 0.05s)
+       ========================================================================= */
+    function gameLoop(timestamp) {
+      if (!lastTimestamp) lastTimestamp = timestamp;
+      const dtSec = Math.min((timestamp - lastTimestamp) / 1000, 0.05);
+      lastTimestamp = timestamp;
+      const dt60 = dtSec * 60;
+
+      update(dt60);
+      render();
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    /* =========================================================================
+       CONTROLES (TÁCTIL, RATÓN Y TECLADO SIN DOBLES DISPAROS)
+       ========================================================================= */
+    canvas.addEventListener('pointerdown', (e) => {
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      e.preventDefault();
+      SoundFX.ensureContext();
+      if (gameState === 'READY' || gameState === 'PLAYING') {
+        triggerFlap();
+      }
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' || e.code === 'ArrowUp') {
+        e.preventDefault();
+        if (gameState === 'READY' || gameState === 'PLAYING') {
+          triggerFlap();
+        } else if (gameState === 'START') {
+          enterReadyState();
+        } else if (gameState === 'WIN' && performance.now() >= retryUnlockAt) {
+          continueTurboMode();
+        } else if (gameState === 'GAMEOVER' && performance.now() >= retryUnlockAt) {
+          enterReadyState();
+        }
+      }
+    });
+
+    btnStart.addEventListener('click', (e) => {
+      e.stopPropagation();
+      enterReadyState();
+    });
+
+    btnRetry.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (performance.now() < retryUnlockAt) return;
+      enterReadyState();
+    });
+
+    btnContinueTurbo.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (performance.now() < retryUnlockAt) return;
+      continueTurboMode();
+    });
+
+    btnPlayAgain.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (performance.now() < retryUnlockAt) return;
+      enterReadyState();
+    });
+
+    muteBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
+    muteBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      SoundFX.toggleMute();
+    });
+
+    window.addEventListener('resize', resizeCanvases);
+    window.addEventListener('orientationchange', () => setTimeout(resizeCanvases, 120));
+
+    /* =========================================================================
+       INICIALIZACIÓN AL CARGAR LA PÁGINA
+       ========================================================================= */
+    window.onload = function () {
+      applyConfigToUI();
+      initParallaxWorld();
+      resizeCanvases();
+      renderAvatarPreview();
+      loadConfiguredPhoto();
+      requestAnimationFrame(gameLoop);
+    };
+  </script>
+</body>
+</html>
